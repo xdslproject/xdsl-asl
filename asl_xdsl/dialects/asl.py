@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 
 from xdsl.dialects import builtin
 from xdsl.ir import (
@@ -11,8 +11,15 @@ from xdsl.ir import (
     TypeAttribute,
     VerifyException,
 )
-from xdsl.irdl import ParameterDef, irdl_attr_definition
-from xdsl.parser import AttrParser
+from xdsl.irdl import (
+    IRDLOperation,
+    ParameterDef,
+    irdl_attr_definition,
+    irdl_op_definition,
+    prop_def,
+    result_def,
+)
+from xdsl.parser import AttrParser, Parser
 from xdsl.printer import Printer
 
 
@@ -159,8 +166,41 @@ class BitVectorAttr(ParametrizedAttribute):
         printer.print(">")
 
 
+@irdl_op_definition
+class ConstantBoolOp(IRDLOperation):
+    """A constant boolean operation."""
+
+    name = "asl.constant_bool"
+
+    value = prop_def(BoolAttr)
+    res = result_def(BoolType())
+
+    def __init__(self, value: bool | BoolAttr, attr_dict: Mapping[str, Attribute] = {}):
+        if isinstance(value, bool):
+            value = BoolAttr(value)
+        super().__init__(
+            result_types=[BoolType()],
+            properties={"value": value},
+            attributes=attr_dict,
+        )
+
+    @classmethod
+    def parse(cls, parser: Parser) -> ConstantBoolOp:
+        """Parse the operation."""
+        value = parser.parse_boolean()
+        attr_dict = parser.parse_optional_attr_dict()
+        return ConstantBoolOp(value, attr_dict)
+
+    def print(self, printer: Printer) -> None:
+        """Print the operation."""
+        printer.print(" ", "true" if self.value else "false")
+        if self.attributes:
+            printer.print(" ")
+            printer.print_attr_dict(self.attributes)
+
+
 ASLDialect = Dialect(
     "asl",
-    [],
+    [ConstantBoolOp],
     [BoolType, BoolAttr, IntegerType, IntegerAttr, BitVectorType, BitVectorAttr],
 )
