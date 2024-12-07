@@ -4,6 +4,8 @@ import re
 from typing import NamedTuple
 
 from xdsl.parser import BaseParser
+from xdsl.parser.base_parser import ParserState
+from xdsl.utils.lexer import Input, Lexer
 
 IDENTIFIER = re.compile("[A-z_][A-z_\\d]*")
 
@@ -89,5 +91,17 @@ class Decl(NamedTuple):
         if id != D_TypeDecl.__name__:
             raise NotImplementedError(f"Unimplemented declaration {id}")
         decl = D_TypeDecl.parse_ast_tail(parser)
-        parser.parse_punctuation(")")
         return Decl(decl)
+
+
+def base_parser(input: str) -> BaseParser:
+    return BaseParser(ParserState(Lexer(Input(input, "<unknown>"))))
+
+
+def parse_serialized_ast(ast: str) -> tuple[Decl, ...]:
+    parser = base_parser(ast)
+    return tuple(
+        parser.parse_comma_separated_list(
+            BaseParser.Delimiter.SQUARE, lambda: Decl.parse_ast(parser)
+        )
+    )
