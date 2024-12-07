@@ -724,6 +724,7 @@ ASLDialect = Dialect(
         LtIntOp,
         GeIntOp,
         GtIntOp,
+        # Bits operations
         AddBitsOp,
         SubBitsOp,
         AndBitsOp,
