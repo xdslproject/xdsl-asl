@@ -3,29 +3,23 @@ from __future__ import annotations
 import re
 from typing import NamedTuple
 
-from asl_xdsl.frontend.parser import Parser
+from xdsl.parser import BaseParser
 
 IDENTIFIER = re.compile("[A-z_][A-z_\\d]*")
-
-
-def parse_optional_identifier(parser: Parser) -> str | None:
-    return parser.parse_optional_pattern(IDENTIFIER)
-
-
-def parse_identifier(parser: Parser) -> str:
-    return parser.expect("identifier", parse_optional_identifier)
 
 
 class Ty(NamedTuple):
     ty: T_Exception
 
     @staticmethod
-    def parse_ast(parser: Parser) -> Ty:
-        parser.parse_chars("annot (")
-        id = parser.expect("Ty", lambda parser: parser.peek_optional(IDENTIFIER))[0]
+    def parse_ast(parser: BaseParser) -> Ty:
+        parser.parse_characters("annot")
+        parser.parse_punctuation("(")
+        id = parser.expect(parser.parse_optional_identifier, "Ty")
         if id != T_Exception.__name__:
             raise NotImplementedError(f"Unimplemented type {id}")
-        ty = T_Exception.parse_ast(parser)
+        ty = T_Exception.parse_ast_tail(parser)
+        parser.parse_punctuation(")")
         return Ty(ty)
 
 
@@ -34,7 +28,7 @@ class Field(NamedTuple):
     ty: Ty
 
     @staticmethod
-    def parse_ast(parser: Parser) -> Field:
+    def parse_ast(parser: BaseParser) -> Field:
         raise NotImplementedError
 
 
@@ -42,12 +36,14 @@ class T_Exception(NamedTuple):
     fields: tuple[Field, ...]
 
     @staticmethod
-    def parse_ast(parser: Parser) -> T_Exception:
-        parser.parse_chars(T_Exception.__name__)
-        parser.parse_chars(" [")
-        fields = parser.parse_list(
-            Field.parse_ast,
-            lambda parser: parser.parse_chars(", "),
-            lambda parser: parser.parse_optional_chars("]"),
+    def parse_ast_tail(parser: BaseParser) -> T_Exception:
+        # parser.parse_characters(" ")
+        fields = parser.parse_comma_separated_list(
+            BaseParser.Delimiter.SQUARE, lambda: Field.parse_ast(parser)
         )
         return T_Exception(tuple(fields))
+
+    @staticmethod
+    def parse_ast(parser: BaseParser) -> T_Exception:
+        parser.parse_characters(T_Exception.__name__)
+        return T_Exception.parse_ast_tail(parser)

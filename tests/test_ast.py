@@ -1,7 +1,12 @@
 import pytest
+from xdsl.parser import BaseParser, ParserState
+from xdsl.utils.lexer import Input, Lexer
 
-from asl_xdsl.frontend.ast import T_Exception, Ty, parse_identifier
-from asl_xdsl.frontend.parser import Parser
+from asl_xdsl.frontend.ast import T_Exception, Ty
+
+
+def p(input: str) -> BaseParser:
+    return BaseParser(ParserState(Lexer(Input(input, "<unknown>"))))
 
 
 @pytest.mark.parametrize(
@@ -13,15 +18,15 @@ from asl_xdsl.frontend.parser import Parser
     ],
 )
 def test_parse_identifier(identifier: str):
-    parser = Parser(identifier)
-    assert parse_identifier(parser) == identifier
+    parser = p(identifier)
+    assert parser.parse_identifier() == identifier
 
 
 def test_parse_exception():
-    parser = Parser("T_Exception []")
+    parser = p("T_Exception []")
     assert T_Exception.parse_ast(parser) == T_Exception(())
 
 
 def test_parse_type():
-    parser = Parser("annot (T_Exception [])")
+    parser = p("annot (T_Exception [])")
     assert Ty.parse_ast(parser) == Ty(T_Exception(()))
