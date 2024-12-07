@@ -57,34 +57,6 @@ class IntegerType(ParametrizedAttribute, TypeAttribute):
 
 
 @irdl_attr_definition
-class IntegerAttr(ParametrizedAttribute):
-    """An arbitrary-precision integer attribute."""
-
-    name = "asl.int_attr"
-
-    value: ParameterDef[builtin.IntAttr]
-
-    def __init__(self, value: int | builtin.IntAttr):
-        if isinstance(value, int):
-            value = builtin.IntAttr(value)
-        super().__init__([value])
-
-    @classmethod
-    def parse_parameters(cls, parser: AttrParser) -> Sequence[Attribute]:
-        """Parse the attribute parameters."""
-        parser.parse_characters("<")
-        value = builtin.IntAttr(parser.parse_integer())
-        parser.parse_characters(">")
-        return [value]
-
-    def print_parameters(self, printer: Printer) -> None:
-        """Print the attribute parameters."""
-        printer.print("<")
-        printer.print(self.value.data)
-        printer.print(">")
-
-
-@irdl_attr_definition
 class BitVectorType(ParametrizedAttribute, TypeAttribute):
     """A bit vector type."""
 
@@ -199,8 +171,43 @@ class ConstantBoolOp(IRDLOperation):
             printer.print_attr_dict(self.attributes)
 
 
+@irdl_op_definition
+class ConstantIntOp(IRDLOperation):
+    """A constant arbitrary-sized integer operation."""
+
+    name = "asl.constant_int"
+
+    value = prop_def(builtin.IntAttr)
+    res = result_def(IntegerType())
+
+    def __init__(
+        self, value: int | builtin.IntAttr, attr_dict: Mapping[str, Attribute] = {}
+    ):
+        if isinstance(value, int):
+            value = builtin.IntAttr(value)
+        super().__init__(
+            result_types=[IntegerType()],
+            properties={"value": value},
+            attributes=attr_dict,
+        )
+
+    @classmethod
+    def parse(cls, parser: Parser) -> ConstantIntOp:
+        """Parse the operation."""
+        value = parser.parse_integer(allow_boolean=False, allow_negative=False)
+        attr_dict = parser.parse_optional_attr_dict()
+        return ConstantIntOp(value, attr_dict)
+
+    def print(self, printer: Printer) -> None:
+        """Print the operation."""
+        printer.print(" ", self.value.data)
+        if self.attributes:
+            printer.print(" ")
+            printer.print_attr_dict(self.attributes)
+
+
 ASLDialect = Dialect(
     "asl",
-    [ConstantBoolOp],
-    [BoolType, BoolAttr, IntegerType, IntegerAttr, BitVectorType, BitVectorAttr],
+    [ConstantBoolOp, ConstantIntOp],
+    [BoolType, BoolAttr, IntegerType, BitVectorType, BitVectorAttr],
 )
