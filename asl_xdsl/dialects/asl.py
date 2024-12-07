@@ -4,11 +4,15 @@ from collections.abc import Mapping, Sequence
 from typing import ClassVar
 
 from xdsl.dialects import builtin
+from xdsl.dialects.utils import parse_func_op_like, print_func_op_like
 from xdsl.ir import (
     Attribute,
+    Block,
     Data,
     Dialect,
+    Operation,
     ParametrizedAttribute,
+    Region,
     SSAValue,
     TypeAttribute,
     VerifyException,
@@ -22,10 +26,20 @@ from xdsl.irdl import (
     irdl_op_definition,
     operand_def,
     prop_def,
+    region_def,
     result_def,
+    traits_def,
+    var_operand_def,
 )
 from xdsl.parser import AttrParser, Parser
 from xdsl.printer import Printer
+from xdsl.traits import (
+    CallableOpInterface,
+    HasParent,
+    IsolatedFromAbove,
+    IsTerminator,
+    SymbolOpInterface,
+)
 
 
 @irdl_attr_definition
@@ -692,6 +706,126 @@ class NeBitsOp(IRDLOperation):
         )
 
 
+class FuncOpCallableInterface(CallableOpInterface):
+    @classmethod
+    def get_callable_region(cls, op: Operation) -> Region:
+        assert isinstance(op, FuncOp)
+        return op.body
+
+    @classmethod
+    def get_argument_types(cls, op: Operation) -> tuple[Attribute, ...]:
+        assert isinstance(op, FuncOp)
+        return op.function_type.inputs.data
+
+    @classmethod
+    def get_result_types(cls, op: Operation) -> tuple[Attribute, ...]:
+        assert isinstance(op, FuncOp)
+        return op.function_type.outputs.data
+
+
+@irdl_op_definition
+class FuncOp(IRDLOperation):
+    """A function operation."""
+
+    name = "asl.func"
+
+    body = region_def()
+    sym_name = prop_def(builtin.StringAttr)
+    function_type = prop_def(builtin.FunctionType)
+
+    traits = traits_def(
+        IsolatedFromAbove(), SymbolOpInterface(), FuncOpCallableInterface()
+    )
+
+    def __init__(
+        self,
+        name: str,
+        function_type: builtin.FunctionType,
+        region: Region | None = None,
+    ):
+        if region is None:
+            region = Region(Block(arg_types=function_type.inputs))
+        properties: dict[str, Attribute | None] = {
+            "sym_name": builtin.StringAttr(name),
+            "function_type": function_type,
+        }
+        super().__init__(properties=properties, regions=[region])
+
+    def verify_(self) -> None:
+        # If this is an empty region (external function), then return
+        if len(self.body.blocks) == 0:
+            return
+
+        entry_block = self.body.blocks.first
+        assert entry_block is not None
+        block_arg_types = entry_block.arg_types
+        if self.function_type.inputs.data != tuple(block_arg_types):
+            raise VerifyException(
+                "Expected entry block arguments to have the same types as the function "
+                "input types"
+            )
+
+        if not isinstance(last_op := entry_block.last_op, ReturnOp):
+            raise VerifyException("Expected last operation of function to be a return")
+        if tuple(arg.type for arg in last_op.args) != self.function_type.outputs.data:
+            raise VerifyException(
+                "Expected return types to match the function output types"
+            )
+
+    @classmethod
+    def parse(cls, parser: Parser) -> FuncOp:
+        (
+            name,
+            input_types,
+            return_types,
+            region,
+            extra_attrs,
+            _,
+        ) = parse_func_op_like(
+            parser, reserved_attr_names=("sym_name", "function_type")
+        )
+        func = FuncOp(
+            name=name,
+            function_type=builtin.FunctionType.from_lists(input_types, return_types),
+            region=region,
+        )
+        if extra_attrs is not None:
+            func.attributes |= extra_attrs.data
+        return func
+
+    def print(self, printer: Printer):
+        print_func_op_like(
+            printer,
+            self.sym_name,
+            self.function_type,
+            self.body,
+            self.attributes,
+            reserved_attr_names=(
+                "sym_name",
+                "function_type",
+            ),
+        )
+
+
+@irdl_op_definition
+class ReturnOp(IRDLOperation):
+    """
+    A return operation.
+    Should be the last operation of a function
+    """
+
+    name = "asl.return"
+
+    args = var_operand_def()
+
+    traits = traits_def(HasParent(FuncOp), IsTerminator())
+
+    assembly_format = "($args^ `:` type($args))? attr-dict"
+
+    def __init__(self, value: SSAValue):
+        super().__init__(operands=[value])
+
+
 ASLDialect = Dialect(
     "asl",
     [
@@ -735,6 +869,9 @@ ASLDialect = Dialect(
         NotBitsOp,
         EqBitsOp,
         NeBitsOp,
+        # Functions
+        ReturnOp,
+        FuncOp,
     ],
     [BoolType, BoolAttr, IntegerType, BitVectorType, BitVectorAttr],
 )
