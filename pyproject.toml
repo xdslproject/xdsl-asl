@@ -20,7 +20,7 @@ zip-safe = false
 xdsl_smt = ["py.typed"]
 
 [project.scripts]
-asl-opt = "asl.tools.asl_opt:main"
+asl-opt = "asl_xdsl.tools.asl_opt:main"
 
 [build-system]
 requires = ["setuptools>=61", "wheel"]
@@ -29,7 +29,7 @@ build-backend = "setuptools.build_meta"
 [tool.pyright]
 reportImportCycles = false
 typeCheckingMode = "strict"
-include = ["asl"]
+include = ["asl_xdsl"]
 
 [tool.ruff]
 target-version = "py310"
