@@ -42,6 +42,9 @@ class Parser:
             self.pos += len(chars)
             return chars
 
+    def parse_chars(self, chars: str) -> str:
+        return self.expect(chars, lambda parser: parser.parse_optional_chars(chars))
+
     def parse_optional_pattern(self, pattern: re.Pattern[str]):
         if (match := pattern.match(self.input.content, self.pos)) is not None:
             self.pos = match.regs[0][1]
@@ -81,6 +84,22 @@ class Parser:
             return []
         if (first := el(self)) is None:
             return None
+        res = [first]
+        while end(self) is None:
+            self.expect("separator", separator)
+            element = self.expect("element", el)
+            res.append(element)
+        return res
+
+    def parse_list(
+        self,
+        el: Callable[["Parser"], T],
+        separator: Callable[["Parser"], Any | None],
+        end: Callable[["Parser"], Any | None],
+    ) -> list[T]:
+        if end(self) is not None:
+            return []
+        first = el(self)
         res = [first]
         while end(self) is None:
             self.expect("separator", separator)
