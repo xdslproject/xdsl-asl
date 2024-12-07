@@ -45,10 +45,16 @@ class Parser:
     def parse_chars(self, chars: str) -> str:
         return self.expect(chars, lambda parser: parser.parse_optional_chars(chars))
 
-    def parse_optional_pattern(self, pattern: re.Pattern[str]):
+    def peek_optional(self, pattern: re.Pattern[str]):
         if (match := pattern.match(self.input.content, self.pos)) is not None:
-            self.pos = match.regs[0][1]
-            return self.input.content[match.pos : self.pos]
+            end_pos = match.regs[0][1]
+            return self.input.content[match.pos : end_pos], end_pos
+
+    def parse_optional_pattern(self, pattern: re.Pattern[str]):
+        res = self.peek_optional(pattern)
+        if res is not None:
+            self.pos = res[1]
+            return res[0]
 
     # endregion
     # region: Helpers

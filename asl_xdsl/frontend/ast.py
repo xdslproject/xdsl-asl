@@ -19,6 +19,15 @@ def parse_identifier(parser: Parser) -> str:
 class Ty(NamedTuple):
     ty: T_Exception
 
+    @staticmethod
+    def parse_ast(parser: Parser) -> Ty:
+        parser.parse_chars("annot (")
+        id = parser.expect("Ty", lambda parser: parser.peek_optional(IDENTIFIER))[0]
+        if id != T_Exception.__name__:
+            raise NotImplementedError(f"Unimplemented type {id}")
+        ty = T_Exception.parse_ast(parser)
+        return Ty(ty)
+
 
 class Field(NamedTuple):
     id: str
