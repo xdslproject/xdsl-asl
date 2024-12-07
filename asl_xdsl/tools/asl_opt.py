@@ -1,9 +1,12 @@
 from xdsl.xdsl_opt_main import xDSLOptMain
 
+from asl_xdsl.dialects.asl import ASLDialect
+
 
 class ASLOptMain(xDSLOptMain):
     def register_all_dialects(self):
-        return super().register_all_dialects()
+        super().register_all_dialects()
+        self.ctx.load_dialect(ASLDialect)
 
     def register_all_passes(self):
         return super().register_all_passes()
