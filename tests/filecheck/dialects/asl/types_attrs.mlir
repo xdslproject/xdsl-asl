@@ -7,7 +7,7 @@ builtin.module {
     "test.op"() {int_type = !asl.int} : () -> ()
 
     "test.op"() {bits_type = !asl.bits<32>} : () -> ()
-    "test.op"() {bits_attr = #asl.bits_attr<42 : 32>} : () -> ()
+    "test.op"() {bits_attr = #asl.bits_attr<42 : !asl.bits<32>>} : () -> ()
 }
 
 // CHECK:         "test.op"() {"bool_type" = !asl.bool} : () -> ()
