@@ -13,3 +13,13 @@ precommit-install:
 .PHONY: precommit
 precommit:
 	pre-commit run --all
+
+# run all tests
+.PHONY: tests
+tests: pyright
+	@echo All tests done.
+
+# run pyright on all files in the current git commit
+.PHONY: pyright
+pyright:
+	pyright $(shell git diff --staged --name-only  -- '*.py')
