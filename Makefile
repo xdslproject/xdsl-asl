@@ -14,9 +14,24 @@ precommit-install:
 precommit:
 	pre-commit run --all
 
+# run filecheck tests
+.PHONY: filecheck
+filecheck:
+	lit -vv tests/filecheck --order=smart --timeout=20
+
+# run pytest tests
+.PHONY: pytest
+pytest:
+	pytest tests -W error -vv
+
+# run all tests
+.PHONY: tests-functional
+tests-functional: pytest filecheck
+	@echo All functional tests done.
+
 # run all tests
 .PHONY: tests
-tests: pyright
+tests: tests-functional pyright
 	@echo All tests done.
 
 # run pyright on all files in the current git commit
