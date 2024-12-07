@@ -1,6 +1,7 @@
 import pytest
 
 from asl_xdsl.frontend.ast import (
+    AST,
     D_TypeDecl,
     Decl,
     T_Exception,
@@ -50,4 +51,4 @@ def test_parse_decl():
 def test_parse_ast():
     assert parse_serialized_ast(
         '[D_TypeDecl ("except", annot (T_Exception []), None)]'
-    ) == (Decl(D_TypeDecl("except", Ty(T_Exception(())), None)),)
+    ) == AST((Decl(D_TypeDecl("except", Ty(T_Exception(())), None)),))

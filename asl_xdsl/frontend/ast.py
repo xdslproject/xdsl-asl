@@ -94,14 +94,24 @@ class Decl(NamedTuple):
         return Decl(decl)
 
 
+class AST(NamedTuple):
+    decls: tuple[Decl, ...]
+
+    @staticmethod
+    def parse_ast(parser: BaseParser) -> AST:
+        return AST(
+            tuple(
+                parser.parse_comma_separated_list(
+                    BaseParser.Delimiter.SQUARE, lambda: Decl.parse_ast(parser)
+                )
+            )
+        )
+
+
 def base_parser(input: str) -> BaseParser:
     return BaseParser(ParserState(Lexer(Input(input, "<unknown>"))))
 
 
-def parse_serialized_ast(ast: str) -> tuple[Decl, ...]:
+def parse_serialized_ast(ast: str) -> AST:
     parser = base_parser(ast)
-    return tuple(
-        parser.parse_comma_separated_list(
-            BaseParser.Delimiter.SQUARE, lambda: Decl.parse_ast(parser)
-        )
-    )
+    return AST.parse_ast(parser)
