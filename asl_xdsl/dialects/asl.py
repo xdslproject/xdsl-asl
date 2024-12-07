@@ -8,6 +8,7 @@ from xdsl.ir import (
     Data,
     Dialect,
     ParametrizedAttribute,
+    SSAValue,
     TypeAttribute,
     VerifyException,
 )
@@ -16,6 +17,7 @@ from xdsl.irdl import (
     ParameterDef,
     irdl_attr_definition,
     irdl_op_definition,
+    operand_def,
     prop_def,
     result_def,
 )
@@ -239,8 +241,102 @@ class ConstantBitVectorOp(IRDLOperation):
             printer.print_attr_dict(self.attributes)
 
 
+@irdl_op_definition
+class NotOp(IRDLOperation):
+    """A bitwise NOT operation."""
+
+    name = "asl.not_bool"
+
+    arg = operand_def(BoolType())
+    res = result_def(BoolType())
+
+    assembly_format = "$arg attr-dict"
+
+    def __init__(self, arg: SSAValue, attr_dict: Mapping[str, Attribute] = {}):
+        super().__init__(
+            operands=[arg],
+            result_types=[BoolType()],
+            attributes=attr_dict,
+        )
+
+
+class BinaryBoolOp(IRDLOperation):
+    """A binary boolean operation."""
+
+    lhs = operand_def(BoolType())
+    rhs = operand_def(BoolType())
+    res = result_def(BoolType())
+
+    assembly_format = "$lhs `,` $rhs attr-dict"
+
+    def __init__(
+        self,
+        lhs: SSAValue,
+        rhs: SSAValue,
+        attr_dict: Mapping[str, Attribute] = {},
+    ):
+        super().__init__(
+            operands=[lhs, rhs],
+            result_types=[BoolType()],
+            attributes=attr_dict,
+        )
+
+
+@irdl_op_definition
+class AndBoolOp(BinaryBoolOp):
+    """A boolean AND operation."""
+
+    name = "asl.and_bool"
+
+
+@irdl_op_definition
+class OrBoolOp(BinaryBoolOp):
+    """A boolean OR operation."""
+
+    name = "asl.or_bool"
+
+
+@irdl_op_definition
+class EqBoolOp(BinaryBoolOp):
+    """A boolean EQ operation."""
+
+    name = "asl.eq_bool"
+
+
+@irdl_op_definition
+class NeBoolOp(BinaryBoolOp):
+    """A boolean NE operation."""
+
+    name = "asl.ne_bool"
+
+
+@irdl_op_definition
+class ImpliesBoolOp(BinaryBoolOp):
+    """A boolean IMPLIES operation."""
+
+    name = "asl.implies_bool"
+
+
+@irdl_op_definition
+class EquivBoolOp(BinaryBoolOp):
+    """A boolean EQUIV operation."""
+
+    name = "asl.equiv_bool"
+
+
 ASLDialect = Dialect(
     "asl",
-    [ConstantBoolOp, ConstantIntOp, ConstantBitVectorOp],
+    [
+        ConstantBoolOp,
+        ConstantIntOp,
+        ConstantBitVectorOp,
+        NotOp,
+        AndBoolOp,
+        OrBoolOp,
+        EqBoolOp,
+        NeBoolOp,
+        ImpliesBoolOp,
+        EquivBoolOp,
+    ],
     [BoolType, BoolAttr, IntegerType, BitVectorType, BitVectorAttr],
 )
