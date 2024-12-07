@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+from typing import ClassVar
 
 from xdsl.dialects import builtin
 from xdsl.ir import (
@@ -13,8 +14,10 @@ from xdsl.ir import (
     VerifyException,
 )
 from xdsl.irdl import (
+    BaseAttr,
     IRDLOperation,
     ParameterDef,
+    VarConstraint,
     irdl_attr_definition,
     irdl_op_definition,
     operand_def,
@@ -324,12 +327,379 @@ class EquivBoolOp(BinaryBoolOp):
     name = "asl.equiv_bool"
 
 
+@irdl_op_definition
+class NegateIntOp(IRDLOperation):
+    """An integer negation operation."""
+
+    name = "asl.negate_int"
+
+    arg = operand_def(IntegerType())
+    res = result_def(IntegerType())
+
+    assembly_format = "$arg attr-dict"
+
+    def __init__(self, arg: SSAValue, attr_dict: Mapping[str, Attribute] = {}):
+        super().__init__(
+            operands=[arg],
+            result_types=[IntegerType()],
+            attributes=attr_dict,
+        )
+
+
+class BinaryIntOp(IRDLOperation):
+    """A binary integer operation."""
+
+    lhs = operand_def(IntegerType())
+    rhs = operand_def(IntegerType())
+    res = result_def(IntegerType())
+
+    assembly_format = "$lhs `,` $rhs attr-dict"
+
+    def __init__(
+        self,
+        lhs: SSAValue,
+        rhs: SSAValue,
+        attr_dict: Mapping[str, Attribute] = {},
+    ):
+        super().__init__(
+            operands=[lhs, rhs],
+            result_types=[IntegerType()],
+            attributes=attr_dict,
+        )
+
+
+@irdl_op_definition
+class AddIntOp(BinaryIntOp):
+    """An integer addition operation."""
+
+    name = "asl.add_int"
+
+
+@irdl_op_definition
+class SubIntOp(BinaryIntOp):
+    """An integer subtraction operation."""
+
+    name = "asl.sub_int"
+
+
+@irdl_op_definition
+class MulIntOp(BinaryIntOp):
+    """An integer multiplication operation."""
+
+    name = "asl.mul_int"
+
+
+@irdl_op_definition
+class ExpIntOp(BinaryIntOp):
+    """An integer exponentiation operation."""
+
+    name = "asl.exp_int"
+
+
+@irdl_op_definition
+class ShiftLeftIntOp(BinaryIntOp):
+    """An integer left shift operation."""
+
+    name = "asl.shiftleft_int"
+
+
+@irdl_op_definition
+class ShiftRightIntOp(BinaryIntOp):
+    """An integer right shift operation."""
+
+    name = "asl.shiftright_int"
+
+
+@irdl_op_definition
+class DivIntOp(BinaryIntOp):
+    """
+    An integer division operation.
+    The rhs is expected to be positive, and to divide the lhs exactly.
+    """
+
+    name = "asl.div_int"
+
+
+@irdl_op_definition
+class FDivIntOp(BinaryIntOp):
+    """
+    An integer division remainder operation.
+    The rhs is expected to be positive, and the result is rounded down.
+    """
+
+    name = "asl.fdiv_int"
+
+
+@irdl_op_definition
+class FRemIntOp(BinaryIntOp):
+    """
+    An integer division remainder operation.
+    The rhs is expected to be positive, and the result is positive as well.
+    """
+
+    name = "asl.frem_int"
+
+
+class PredicateIntOp(IRDLOperation):
+    """An integer predicate operation."""
+
+    lhs = operand_def(IntegerType())
+    rhs = operand_def(IntegerType())
+    res = result_def(BoolType())
+
+    assembly_format = "$lhs `,` $rhs attr-dict"
+
+    def __init__(
+        self,
+        lhs: SSAValue,
+        rhs: SSAValue,
+        attr_dict: Mapping[str, Attribute] = {},
+    ):
+        super().__init__(
+            operands=[lhs, rhs],
+            result_types=[BoolType()],
+            attributes=attr_dict,
+        )
+
+
+@irdl_op_definition
+class EqIntOp(PredicateIntOp):
+    """An integer equality operation."""
+
+    name = "asl.eq_int"
+
+
+@irdl_op_definition
+class NeIntOp(PredicateIntOp):
+    """An integer inequality operation."""
+
+    name = "asl.ne_int"
+
+
+@irdl_op_definition
+class LeIntOp(PredicateIntOp):
+    """An integer less-than-or-equal operation."""
+
+    name = "asl.le_int"
+
+
+@irdl_op_definition
+class LtIntOp(PredicateIntOp):
+    """An integer less-than operation."""
+
+    name = "asl.lt_int"
+
+
+@irdl_op_definition
+class GeIntOp(PredicateIntOp):
+    """An integer greater-than-or-equal operation."""
+
+    name = "asl.ge_int"
+
+
+@irdl_op_definition
+class GtIntOp(PredicateIntOp):
+    """An integer greater-than operation."""
+
+    name = "asl.gt_int"
+
+
+class BinaryBitsOp(IRDLOperation):
+    """A binary bit vector operation."""
+
+    T: ClassVar = VarConstraint("T", BaseAttr(BitVectorType))
+
+    lhs = operand_def(T)
+    rhs = operand_def(T)
+    res = result_def(T)
+
+    assembly_format = "$lhs `,` $rhs `:` type($res) attr-dict"
+
+    def __init__(
+        self,
+        lhs: SSAValue,
+        rhs: SSAValue,
+        attr_dict: Mapping[str, Attribute] = {},
+    ):
+        super().__init__(
+            operands=[lhs, rhs],
+            result_types=[lhs.type],
+            attributes=attr_dict,
+        )
+
+
+@irdl_op_definition
+class AddBitsOp(BinaryBitsOp):
+    """A bit vector addition operation."""
+
+    name = "asl.add_bits"
+
+
+@irdl_op_definition
+class SubBitsOp(BinaryBitsOp):
+    """A bit vector subtraction operation."""
+
+    name = "asl.sub_bits"
+
+
+@irdl_op_definition
+class AndBitsOp(BinaryBitsOp):
+    """A bit vector AND operation."""
+
+    name = "asl.and_bits"
+
+
+@irdl_op_definition
+class OrBitsOp(BinaryBitsOp):
+    """A bit vector OR operation."""
+
+    name = "asl.or_bits"
+
+
+@irdl_op_definition
+class XorBitsOp(BinaryBitsOp):
+    """A bit vector XOR operation."""
+
+    name = "asl.xor_bits"
+
+
+@irdl_op_definition
+class AddBitsIntOp(IRDLOperation):
+    """A bit vector addition operation with an integer."""
+
+    name = "asl.add_bits_int"
+
+    T: ClassVar = VarConstraint("T", BaseAttr(BitVectorType))
+
+    lhs = operand_def(T)
+    rhs = operand_def(IntegerType())
+    res = result_def(T)
+
+    assembly_format = "$lhs `,` $rhs `:` type($res) attr-dict"
+
+    def __init__(
+        self,
+        lhs: SSAValue,
+        rhs: SSAValue,
+        attr_dict: Mapping[str, Attribute] = {},
+    ):
+        super().__init__(
+            operands=[lhs, rhs],
+            result_types=[lhs.type],
+            attributes=attr_dict,
+        )
+
+
+@irdl_op_definition
+class SubBitsIntOp(IRDLOperation):
+    """A bit vector subtraction operation with an integer."""
+
+    name = "asl.sub_bits_int"
+
+    T: ClassVar = VarConstraint("T", BaseAttr(BitVectorType))
+
+    lhs = operand_def(T)
+    rhs = operand_def(IntegerType())
+    res = result_def(T)
+
+    assembly_format = "$lhs `,` $rhs `:` type($res) attr-dict"
+
+    def __init__(
+        self,
+        lhs: SSAValue,
+        rhs: SSAValue,
+        attr_dict: Mapping[str, Attribute] = {},
+    ):
+        super().__init__(
+            operands=[lhs, rhs],
+            result_types=[lhs.type],
+            attributes=attr_dict,
+        )
+
+
+@irdl_op_definition
+class NotBitsOp(IRDLOperation):
+    """A bitwise NOT operation."""
+
+    name = "asl.not_bits"
+
+    T: ClassVar = VarConstraint("T", BaseAttr(BitVectorType))
+
+    arg = operand_def(T)
+    res = result_def(T)
+
+    assembly_format = "$arg `:` type($res) attr-dict"
+
+    def __init__(self, arg: SSAValue, attr_dict: Mapping[str, Attribute] = {}):
+        super().__init__(
+            operands=[arg],
+            result_types=[arg.type],
+            attributes=attr_dict,
+        )
+
+
+@irdl_op_definition
+class EqBitsOp(IRDLOperation):
+    """A bit vector EQ operation."""
+
+    name = "asl.eq_bits"
+
+    T: ClassVar = VarConstraint("T", BaseAttr(BitVectorType))
+
+    lhs = operand_def(T)
+    rhs = operand_def(T)
+    res = result_def(BoolType())
+
+    assembly_format = "$lhs `,` $rhs `:` type($lhs) attr-dict"
+
+    def __init__(
+        self,
+        lhs: SSAValue,
+        rhs: SSAValue,
+        attr_dict: Mapping[str, Attribute] = {},
+    ):
+        super().__init__(
+            operands=[lhs, rhs],
+            result_types=[BoolType()],
+            attributes=attr_dict,
+        )
+
+
+@irdl_op_definition
+class NeBitsOp(IRDLOperation):
+    """A bit vector NE operation."""
+
+    name = "asl.ne_bits"
+
+    T: ClassVar = VarConstraint("T", BaseAttr(BitVectorType))
+
+    lhs = operand_def(T)
+    rhs = operand_def(T)
+    res = result_def(BoolType())
+
+    assembly_format = "$lhs `,` $rhs `:` type($lhs) attr-dict"
+
+    def __init__(
+        self,
+        lhs: SSAValue,
+        rhs: SSAValue,
+        attr_dict: Mapping[str, Attribute] = {},
+    ):
+        super().__init__(
+            operands=[lhs, rhs],
+            result_types=[BoolType()],
+            attributes=attr_dict,
+        )
+
+
 ASLDialect = Dialect(
     "asl",
     [
+        # Constants
         ConstantBoolOp,
         ConstantIntOp,
         ConstantBitVectorOp,
+        # Boolean operations
         NotOp,
         AndBoolOp,
         OrBoolOp,
@@ -337,6 +707,33 @@ ASLDialect = Dialect(
         NeBoolOp,
         ImpliesBoolOp,
         EquivBoolOp,
+        # Integer operations
+        NegateIntOp,
+        AddIntOp,
+        SubIntOp,
+        MulIntOp,
+        ExpIntOp,
+        ShiftLeftIntOp,
+        ShiftRightIntOp,
+        DivIntOp,
+        FDivIntOp,
+        FRemIntOp,
+        EqIntOp,
+        NeIntOp,
+        LeIntOp,
+        LtIntOp,
+        GeIntOp,
+        GtIntOp,
+        AddBitsOp,
+        SubBitsOp,
+        AndBitsOp,
+        OrBitsOp,
+        XorBitsOp,
+        AddBitsIntOp,
+        SubBitsIntOp,
+        NotBitsOp,
+        EqBitsOp,
+        NeBitsOp,
     ],
     [BoolType, BoolAttr, IntegerType, BitVectorType, BitVectorAttr],
 )
