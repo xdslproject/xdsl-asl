@@ -64,8 +64,7 @@ class D_TypeDecl(NamedTuple):
             raise NotImplementedError()
 
     @staticmethod
-    def parse_ast(parser: BaseParser) -> D_TypeDecl:
-        parser.parse_characters(D_TypeDecl.__name__)
+    def parse_ast_tail(parser: BaseParser) -> D_TypeDecl:
         parser.parse_punctuation("(")
         id = parser.parse_str_literal()
         parser.parse_punctuation(",")
@@ -74,3 +73,21 @@ class D_TypeDecl(NamedTuple):
         fields = D_TypeDecl.parse_optional_field(parser)
         parser.parse_punctuation(")")
         return D_TypeDecl(id, ty, fields)
+
+    @staticmethod
+    def parse_ast(parser: BaseParser) -> D_TypeDecl:
+        parser.parse_characters(D_TypeDecl.__name__)
+        return D_TypeDecl.parse_ast_tail(parser)
+
+
+class Decl(NamedTuple):
+    decl: D_TypeDecl
+
+    @staticmethod
+    def parse_ast(parser: BaseParser) -> Decl:
+        id = parser.expect(parser.parse_optional_identifier, "Decl")
+        if id != D_TypeDecl.__name__:
+            raise NotImplementedError(f"Unimplemented declaration {id}")
+        decl = D_TypeDecl.parse_ast_tail(parser)
+        parser.parse_punctuation(")")
+        return Decl(decl)
