@@ -47,3 +47,30 @@ class T_Exception(NamedTuple):
     def parse_ast(parser: BaseParser) -> T_Exception:
         parser.parse_characters(T_Exception.__name__)
         return T_Exception.parse_ast_tail(parser)
+
+
+class D_TypeDecl(NamedTuple):
+    id: str
+    ty: Ty
+    fields: tuple[str, tuple[Field, ...]] | None
+
+    @staticmethod
+    def parse_optional_field(
+        parser: BaseParser,
+    ) -> tuple[str, tuple[Field, ...]] | None:
+        if parser.parse_characters("None"):
+            return None
+        else:
+            raise NotImplementedError()
+
+    @staticmethod
+    def parse_ast(parser: BaseParser) -> D_TypeDecl:
+        parser.parse_characters(D_TypeDecl.__name__)
+        parser.parse_punctuation("(")
+        id = parser.parse_str_literal()
+        parser.parse_punctuation(",")
+        ty = Ty.parse_ast(parser)
+        parser.parse_punctuation(",")
+        fields = D_TypeDecl.parse_optional_field(parser)
+        parser.parse_punctuation(")")
+        return D_TypeDecl(id, ty, fields)
