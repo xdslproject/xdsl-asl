@@ -7,6 +7,7 @@ from asl_xdsl.frontend.ast import (
     T_Exception,
     Ty,
     base_parser,
+    parse_identifier,
     parse_serialized_ast,
 )
 
@@ -21,7 +22,7 @@ from asl_xdsl.frontend.ast import (
 )
 def test_parse_identifier(identifier: str):
     parser = base_parser(identifier)
-    assert parser.parse_identifier() == identifier
+    assert parse_identifier(parser) == identifier
 
 
 def test_parse_exception():
