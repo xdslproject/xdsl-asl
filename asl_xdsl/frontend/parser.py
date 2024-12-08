@@ -1,119 +1,26 @@
-import re
-from collections.abc import Callable, Sequence
-from typing import Any, TypeVar
+from xdsl.parser import GenericParser, Input, ParserState
 
-from xdsl.parser import Input
-from xdsl.utils.lexer import Position, Span, StringLiteral
-
-T = TypeVar("T")
+from asl_xdsl.frontend.ast import AST, D_TypeDecl, Decl, Field, T_Exception, Ty
+from asl_xdsl.frontend.lexer import ASLLexer, ASLTokenKind
 
 
-class ParseError(Exception):
-    position: Position
-    message: str
-
-    def __init__(self, position: Position, message: str) -> None:
-        self.position = position
-        self.message = message
-        super().__init__()
-
-    def __str__(self):
-        return f"ParseError at {self.position}: {self.message}"
-
-
-class Parser:
-    input: Input
-    pos: int
-
-    def __init__(self, input: Input | str, pos: int = 0):
+class BaseASLParser(GenericParser[ASLTokenKind]):
+    def __init__(self, input: Input | str):
         if isinstance(input, str):
             input = Input(input, "<unknown>")
-        self.input = input
-        self.pos = pos
+        super().__init__(ParserState(ASLLexer(input)))
 
-    @property
-    def remaining(self) -> str:
-        return self.input.content[self.pos :]
+    def peek(self) -> str | None:
+        if self._current_token.kind == ASLTokenKind.EOF:
+            return None
+        return self._current_token.text
 
-    # region Base parsing functions
+    def parse_optional_identifier(self) -> str | None:
+        if (tok := self._parse_optional_token(ASLTokenKind.IDENTIFIER)) is not None:
+            return tok.text
 
-    def parse_optional_characters(self, chars: str):
-        if self.input.content.startswith(chars, self.pos):
-            self.pos += len(chars)
-            return chars
-
-    def parse_characters(self, chars: str) -> str:
-        return self.expect(
-            lambda parser: parser.parse_optional_characters(chars), chars
-        )
-
-    def peek_optional(self, pattern: re.Pattern[str]):
-        if (match := pattern.match(self.input.content, self.pos)) is not None:
-            end_pos = match.regs[0][1]
-            return self.input.content[match.pos : end_pos], end_pos
-
-    def parse_optional_pattern(self, pattern: re.Pattern[str]):
-        res = self.peek_optional(pattern)
-        if res is not None:
-            self.pos = res[1]
-            return res[0]
-
-    def parse_pattern(self, pattern: re.Pattern[str], message: str = ""):
-        return self.expect(
-            lambda parser: self.parse_optional_pattern(pattern),
-            message if message else str(pattern),
-        )
-
-    # endregion
-    # region: Helpers
-
-    _unescaped_characters_regex = re.compile(r'[^"\\\n\v\f]*')
-
-    def _is_in_bounds(self, size: Position = 1) -> bool:
-        """
-        Check if the current position is within the bounds of the input.
-        """
-        return self.pos + size - 1 < self.input.len
-
-    def _lex_string_literal(self, start_pos: Position) -> str:
-        """
-        Lex a string literal.
-        The first character `"` is expected to have already been parsed.
-        """
-
-        while self._is_in_bounds():
-            self.parse_pattern(self._unescaped_characters_regex)
-            current_char = self.input.at(self.pos)
-            self.pos += 1
-
-            # end of string literal
-            if current_char == '"':
-                return StringLiteral.from_span(
-                    Span(start_pos, self.pos, self.input)
-                ).bytes_contents.decode()
-
-            # newline character in string literal (not allowed)
-            if current_char in ["\n", "\v", "\f"]:
-                raise ParseError(
-                    start_pos,
-                    "Newline character not allowed in string literal.",
-                )
-
-            # escape character
-            # TODO: handle unicode escape
-            if current_char == "\\":
-                escaped_char = self.input.at(self.pos)
-                self.pos += 1
-                if escaped_char not in ['"', "\\", "n", "t"]:
-                    raise ParseError(
-                        start_pos,
-                        "Unknown escape in string literal.",
-                    )
-
-        raise ParseError(
-            start_pos,
-            "End of file reached before closing string literal.",
-        )
+    def parse_identifier(self) -> str:
+        return self.expect(self.parse_optional_identifier, "Expected identifier")
 
     def parse_optional_str_literal(self) -> str | None:
         """
@@ -122,9 +29,13 @@ class Parser:
         Returns the string contents without the quotes and with escape sequences
         resolved.
         """
-        pos = self.pos
-        if self.parse_optional_characters('"'):
-            return self._lex_string_literal(pos)
+
+        if (token := self._parse_optional_token(ASLTokenKind.STRING_LIT)) is None:
+            return None
+        try:
+            return token.kind.get_string_literal_value(token.span)
+        except UnicodeDecodeError:
+            return None
 
     def parse_str_literal(self, context_msg: str = "") -> str:
         """
@@ -134,85 +45,89 @@ class Parser:
         resolved.
         """
         return self.expect(
-            Parser.parse_optional_str_literal,
+            self.parse_optional_str_literal,
             "string literal expected" + context_msg,
         )
 
-    IDENTIFIER_SUFFIX = r"[a-zA-Z0-9_$.]*"
-    BARE_IDENDITIER_REGEX = re.compile(r"[a-zA-Z_]" + IDENTIFIER_SUFFIX)
 
-    def parse_many(self, element: Callable[["Parser"], T | None]) -> tuple[T, ...]:
-        if (first := element(self)) is None:
-            return ()
-        res = [first]
-        while (el := element(self)) is not None:
-            res.append(el)
-        return tuple(res)
+class ASTParser(BaseASLParser):
+    def parse_field(self) -> Field:
+        raise NotImplementedError()
 
-    def parse_many_separated(
-        self,
-        element: Callable[["Parser"], T | None],
-        separator: Callable[["Parser"], Any | None],
-    ) -> tuple[T, ...]:
-        if (first := element(self)) is None:
-            return ()
-        res = [first]
-        while separator(self) is not None:
-            el = self.expect(element, "element")
-            res.append(el)
-        return tuple(res)
+    def parse_exception(self) -> T_Exception:
+        self.parse_characters("T_Exception")
+        fields = self.parse_comma_separated_list(
+            self.Delimiter.SQUARE, self.parse_field
+        )
+        return T_Exception(tuple(fields))
 
-    def parse_optional_list(
-        self,
-        el: Callable[["Parser"], T | None],
-        separator: Callable[["Parser"], Any | None],
-        end: Callable[["Parser"], Any | None],
-    ) -> list[T] | None:
-        if end(self) is not None:
-            return []
-        if (first := el(self)) is None:
+    def parse_type(self) -> Ty:
+        self.parse_characters("annot")
+        self.parse_characters("(")
+        ty = self.peek()
+        if ty == "T_Exception":
+            exc = self.parse_exception()
+            self.parse_characters(")")
+            return Ty(exc)
+        raise NotImplementedError("Unimplemented type {}")
+
+    def parse_optional_type_decl_field(self) -> tuple[str, tuple[Field, ...]] | None:
+        if self.parse_characters("None"):
             return None
-        res = [first]
-        while end(self) is None:
-            self.expect(separator, "separator")
-            element = self.expect(el, "element")
-            res.append(element)
-        return res
+        else:
+            raise NotImplementedError()
 
-    IDENTIFIER = re.compile("[A-z_][A-z_\\d]*")
+    def parse_type_decl(self) -> D_TypeDecl:
+        self.parse_characters("D_TypeDecl")
+        self.parse_characters("(")
+        id = self.parse_str_literal()
+        self.parse_characters(",")
+        ty = self.parse_type()
+        self.parse_characters(",")
+        fields = self.parse_optional_type_decl_field()
+        self.parse_characters(")")
+        return D_TypeDecl(id, ty, fields)
 
-    def parse_optional_identifier(self) -> str | None:
-        return self.parse_optional_pattern(Parser.IDENTIFIER)
+    def parse_decl(self) -> Decl:
+        id = self.peek()
+        if id != D_TypeDecl.__name__:
+            raise NotImplementedError(f"Unimplemented declaration {id}")
+        decl = self.parse_type_decl()
+        return Decl(decl)
 
-    def parse_identifier(self) -> str:
-        return self.expect(Parser.parse_optional_identifier, "identifier")
+    def parse_ast(self) -> AST:
+        decls = self.parse_comma_separated_list(self.Delimiter.SQUARE, self.parse_decl)
+        return AST(tuple(decls))
 
-    def parse_list(
-        self,
-        el: Callable[["Parser"], T],
-        separator: Callable[["Parser"], Any | None],
-        end: Callable[["Parser"], Any | None],
-    ) -> list[T]:
-        if end(self) is not None:
-            return []
-        first = el(self)
-        res = [first]
-        while end(self) is None:
-            self.expect(separator, "separator")
-            element = self.expect(el, "element")
-            res.append(element)
-        return res
 
-    def expect(self, parse: Callable[["Parser"], T | None], message: str) -> T:
-        if (parsed := parse(self)) is None:
-            raise ParseError(self.pos, message)
-        return parsed
+class ASLParser(BaseASLParser):
+    def parse_exception(self) -> T_Exception:
+        self.parse_characters("exception")
+        # TODO: parse fields
+        return T_Exception(())
 
-    def parse_one_of(
-        self, parsers: Sequence[Callable[["Parser"], T | None]]
-    ) -> T | None:
-        for parser in parsers:
-            if (parsed := parser(self)) is not None:
-                return parsed
+    def parse_type(self) -> Ty:
+        if self.peek() == "exception":
+            return Ty(self.parse_exception())
+        raise NotImplementedError()
 
-    # endregion
+    def parse_type_decl(self) -> D_TypeDecl:
+        self.parse_characters("type")
+        id = self.parse_identifier()
+        self.parse_characters("of")
+        ty = self.parse_type()
+        self._parse_optional_token(ASLTokenKind.SEMICOLON)
+        return D_TypeDecl(id, ty, None)
+
+    def parse_decl(self) -> Decl:
+        if self.peek() == "type":
+            return Decl(self.parse_type_decl())
+        raise NotImplementedError(f"Decl {self.peek()} not implemented")
+
+    def parse_ast(self) -> AST:
+        decls: list[Decl] = []
+
+        while self.peek() is not None:
+            decls.append(self.parse_decl())
+
+        return AST(tuple(decls))

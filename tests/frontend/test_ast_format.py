@@ -6,9 +6,8 @@ from asl_xdsl.frontend.ast import (
     Decl,
     T_Exception,
     Ty,
-    base_parser,
-    parse_serialized_ast,
 )
+from asl_xdsl.frontend.parser import ASTParser
 
 
 @pytest.mark.parametrize(
@@ -20,35 +19,39 @@ from asl_xdsl.frontend.ast import (
     ],
 )
 def test_parse_identifier(identifier: str):
-    parser = base_parser(identifier)
+    parser = ASTParser(identifier)
     assert parser.parse_identifier() == identifier
+    assert parser.peek() is None
 
 
 def test_parse_exception():
-    parser = base_parser("T_Exception []")
-    assert T_Exception.parse_ast(parser) == T_Exception(())
+    parser = ASTParser("T_Exception []")
+    assert parser.parse_exception() == T_Exception(())
+    assert parser.peek() is None
 
 
 def test_parse_type():
-    parser = base_parser("annot (T_Exception [])")
-    assert Ty.parse_ast(parser) == Ty(T_Exception(()))
+    parser = ASTParser("annot (T_Exception [])")
+    assert parser.parse_type() == Ty(T_Exception(()))
+    assert parser.peek() is None
 
 
 def test_type_decl():
-    parser = base_parser('D_TypeDecl ("except", annot (T_Exception []), None)')
-    assert D_TypeDecl.parse_ast(parser) == D_TypeDecl(
-        "except", Ty(T_Exception(())), None
-    )
+    parser = ASTParser('D_TypeDecl ("except", annot (T_Exception []), None)')
+    assert parser.parse_type_decl() == D_TypeDecl("except", Ty(T_Exception(())), None)
+    assert parser.peek() is None
 
 
 def test_parse_decl():
-    parser = base_parser('D_TypeDecl ("except", annot (T_Exception []), None)')
-    assert Decl.parse_ast(parser) == Decl(
-        D_TypeDecl("except", Ty(T_Exception(())), None)
-    )
+    parser = ASTParser('D_TypeDecl ("except", annot (T_Exception []), None)')
+    assert parser.parse_decl() == Decl(D_TypeDecl("except", Ty(T_Exception(())), None))
+    assert parser.peek() is None
 
 
 def test_parse_ast():
-    assert parse_serialized_ast(
-        '[D_TypeDecl ("except", annot (T_Exception []), None)]'
-    ) == AST((Decl(D_TypeDecl("except", Ty(T_Exception(())), None)),))
+    parser = ASTParser('[D_TypeDecl ("except", annot (T_Exception []), None)]')
+
+    assert parser.parse_ast() == AST(
+        (Decl(D_TypeDecl("except", Ty(T_Exception(())), None)),)
+    )
+    assert parser.peek() is None

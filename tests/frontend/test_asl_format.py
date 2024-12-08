@@ -10,8 +10,8 @@ from asl_xdsl.frontend.ast import (
     Field,
     T_Exception,
     Ty,
-    base_parser,
 )
+from asl_xdsl.frontend.parser import ASLParser
 from asl_xdsl.frontend.printer import Printer
 
 
@@ -29,8 +29,8 @@ def test_print_exception():
 
 
 def test_parse_exception():
-    parser = base_parser("")
-    assert T_Exception.parse_asl_tail(parser) == T_Exception(())
+    parser = ASLParser("exception")
+    assert parser.parse_exception() == T_Exception(())
 
 
 def test_print_field():
@@ -43,8 +43,8 @@ def test_print_type():
 
 
 def test_parse_type():
-    parser = base_parser("exception")
-    assert Ty.parse_asl(parser) == Ty(T_Exception(()))
+    parser = ASLParser("exception")
+    assert parser.parse_type() == Ty(T_Exception(()))
 
 
 def test_print_type_decl():
@@ -55,10 +55,8 @@ def test_print_type_decl():
 
 
 def test_parse_type_decl():
-    parser = base_parser(" except of exception;\n")
-    assert D_TypeDecl.parse_asl_tail(parser) == D_TypeDecl(
-        "except", Ty(T_Exception(())), None
-    )
+    parser = ASLParser("type except of exception;\n")
+    assert parser.parse_type_decl() == D_TypeDecl("except", Ty(T_Exception(())), None)
 
 
 def test_print_decl():
@@ -69,10 +67,8 @@ def test_print_decl():
 
 
 def test_parse_decl():
-    parser = base_parser("type except of exception;\n")
-    assert Decl.parse_optional_asl(parser) == Decl(
-        D_TypeDecl("except", Ty(T_Exception(())), None)
-    )
+    parser = ASLParser("type except of exception;\n")
+    assert parser.parse_decl() == Decl(D_TypeDecl("except", Ty(T_Exception(())), None))
 
 
 def test_print_ast():
@@ -83,7 +79,7 @@ def test_print_ast():
 
 
 def test_parse_asl():
-    parser = base_parser("type except of exception;\n")
-    assert AST.parse_asl(parser) == AST(
+    parser = ASLParser("type except of exception;\n")
+    assert parser.parse_ast() == AST(
         (Decl(D_TypeDecl("except", Ty(T_Exception(())), None)),)
     )
