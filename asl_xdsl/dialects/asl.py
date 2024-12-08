@@ -826,6 +826,30 @@ class ReturnOp(IRDLOperation):
         super().__init__(operands=[value])
 
 
+@irdl_op_definition
+class SliceSingleOp(IRDLOperation):
+    """Slice a single element from a bit vector."""
+
+    name = "asl.slice_single"
+
+    bits = operand_def(BitVectorType)
+    index = operand_def(IntegerType)
+
+    res = result_def(BitVectorType(1))
+
+    assembly_format = "$bits `[` $index `]` `:` type($bits) attr-dict"
+
+    def __init__(
+        self,
+        bits: SSAValue,
+        index: SSAValue,
+    ):
+        super().__init__(
+            operands=[bits, index],
+            result_types=[BitVectorType(1)],
+        )
+
+
 ASLDialect = Dialect(
     "asl",
     [
@@ -872,6 +896,8 @@ ASLDialect = Dialect(
         # Functions
         ReturnOp,
         FuncOp,
+        # Slices
+        SliceSingleOp,
     ],
     [BoolType, BoolAttr, IntegerType, BitVectorType, BitVectorAttr],
 )
