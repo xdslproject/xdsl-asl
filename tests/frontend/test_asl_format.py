@@ -7,7 +7,6 @@ from asl_xdsl.frontend.ast import (
     AST,
     Annotated,
     D_TypeDecl,
-    Decl,
     Field,
     T_Exception,
 )
@@ -63,14 +62,14 @@ def test_parse_type_decl():
 
 def test_print_decl():
     assert (
-        get_asl(Decl(D_TypeDecl("except", Annotated(T_Exception(())), None)).print_asl)
+        get_asl((D_TypeDecl("except", Annotated(T_Exception(())), None)).print_asl)
         == "type except of exception;\n"
     )
 
 
 def test_parse_decl():
     parser = ASLParser("type except of exception;\n")
-    assert parser.parse_decl() == Decl(
+    assert parser.parse_decl() == (
         D_TypeDecl("except", Annotated(T_Exception(())), None)
     )
 
@@ -78,9 +77,7 @@ def test_parse_decl():
 def test_print_ast():
     assert (
         get_asl(
-            AST(
-                (Decl(D_TypeDecl("except", Annotated((T_Exception(()))), None)),)
-            ).print_asl
+            AST(((D_TypeDecl("except", Annotated((T_Exception(()))), None)),)).print_asl
         )
         == "type except of exception;\n"
     )
@@ -89,5 +86,5 @@ def test_print_ast():
 def test_parse_asl():
     parser = ASLParser("type except of exception;\n")
     assert parser.parse_ast() == AST(
-        (Decl(D_TypeDecl("except", Annotated((T_Exception(()))), None)),)
+        ((D_TypeDecl("except", Annotated((T_Exception(()))), None)),)
     )

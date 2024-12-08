@@ -4,7 +4,6 @@ from asl_xdsl.frontend.ast import (
     AST,
     Annotated,
     D_TypeDecl,
-    Decl,
     T_Exception,
     T_Record,
     TypeDesc,
@@ -61,7 +60,7 @@ def test_type_decl():
 
 def test_parse_decl():
     parser = ASTParser('D_TypeDecl ("except", annot (T_Exception []), None)')
-    assert parser.parse_decl() == Decl(
+    assert parser.parse_decl() == (
         D_TypeDecl("except", Annotated(T_Exception(())), None)
     )
     assert parser.peek() is None
@@ -71,6 +70,6 @@ def test_parse_ast():
     parser = ASTParser('[D_TypeDecl ("except", annot (T_Exception []), None)]')
 
     assert parser.parse_ast() == AST(
-        (Decl(D_TypeDecl("except", Annotated((T_Exception(()))), None)),)
+        ((D_TypeDecl("except", Annotated((T_Exception(()))), None)),)
     )
     assert parser.peek() is None

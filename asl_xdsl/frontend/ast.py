@@ -264,11 +264,7 @@ class D_Func(NamedTuple):
         printer.print_string("end;\n")
 
 
-class Decl(NamedTuple):
-    decl: D_TypeDecl | D_Func
-
-    def print_asl(self, printer: Printer) -> None:
-        self.decl.print_asl(printer)
+Decl: TypeAlias = D_TypeDecl | D_Func
 
 
 class AST(NamedTuple):

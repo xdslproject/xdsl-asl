@@ -144,7 +144,7 @@ class ASTParser(BaseASLParser):
         if id != D_TypeDecl.__name__:
             raise NotImplementedError(f"Unimplemented declaration {id}")
         decl = self.parse_type_decl()
-        return Decl(decl)
+        return decl
 
     def parse_ast(self) -> AST:
         decls = self.parse_comma_separated_list(self.Delimiter.SQUARE, self.parse_decl)
@@ -262,7 +262,7 @@ class ASLParser(BaseASLParser):
         if p is None:
             raise NotImplementedError(f"Unimplemented type {decl_key}")
         decl = p(self)
-        return Decl(decl)
+        return decl
 
     def parse_ast(self) -> AST:
         decls: list[Decl] = []
