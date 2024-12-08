@@ -6,7 +6,7 @@ from asl_xdsl.frontend.printer import Printer
 
 
 class Ty(NamedTuple):
-    ty: T_Exception
+    ty: T_Exception | T_Record
 
     def print_asl(self, printer: Printer):
         self.ty.print_asl(printer)
@@ -27,6 +27,15 @@ class T_Exception(NamedTuple):
         if self.fields:
             raise NotImplementedError()
         printer.print_string("exception")
+
+
+class T_Record(NamedTuple):
+    fields: tuple[Field, ...]
+
+    def print_asl(self, printer: Printer) -> None:
+        if self.fields:
+            raise NotImplementedError()
+        printer.print_string("record")
 
 
 class D_TypeDecl(NamedTuple):

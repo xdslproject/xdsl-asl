@@ -5,6 +5,7 @@ from asl_xdsl.frontend.ast import (
     D_TypeDecl,
     Decl,
     T_Exception,
+    T_Record,
     Ty,
 )
 from asl_xdsl.frontend.parser import ASTParser
@@ -30,9 +31,22 @@ def test_parse_exception():
     assert parser.peek() is None
 
 
-def test_parse_type():
-    parser = ASTParser("annot (T_Exception [])")
-    assert parser.parse_type() == Ty(T_Exception(()))
+def test_parse_record():
+    parser = ASTParser("T_Record []")
+    assert parser.parse_record() == T_Record(())
+    assert parser.peek() is None
+
+
+@pytest.mark.parametrize(
+    "serialized, deserialized",
+    [
+        ("annot (T_Exception [])", Ty(T_Exception(()))),
+        ("annot (T_Record [])", Ty(T_Record(()))),
+    ],
+)
+def test_parse_type(serialized: str, deserialized: Ty):
+    parser = ASTParser(serialized)
+    assert parser.parse_type() == deserialized
     assert parser.peek() is None
 
 

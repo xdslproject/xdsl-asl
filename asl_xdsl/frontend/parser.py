@@ -1,6 +1,16 @@
+from types import NotImplementedType
+
 from xdsl.parser import GenericParser, Input, ParserState
 
-from asl_xdsl.frontend.ast import AST, D_TypeDecl, Decl, Field, T_Exception, Ty
+from asl_xdsl.frontend.ast import (
+    AST,
+    D_TypeDecl,
+    Decl,
+    Field,
+    T_Exception,
+    T_Record,
+    Ty,
+)
 from asl_xdsl.frontend.lexer import ASLLexer, ASLTokenKind
 
 
@@ -61,15 +71,29 @@ class ASTParser(BaseASLParser):
         )
         return T_Exception(tuple(fields))
 
+    def parse_record(self) -> T_Record:
+        self.parse_characters("T_Record")
+        fields = self.parse_comma_separated_list(
+            self.Delimiter.SQUARE, self.parse_field
+        )
+        return T_Record(tuple(fields))
+
+    TYPE_PARSER = {
+        "T_Exception": parse_exception,
+        "T_Record": parse_record,
+    }
+
     def parse_type(self) -> Ty:
         self.parse_characters("annot")
         self.parse_characters("(")
-        ty = self.peek()
-        if ty == "T_Exception":
-            exc = self.parse_exception()
-            self.parse_characters(")")
-            return Ty(exc)
-        raise NotImplementedError("Unimplemented type {}")
+        ty_key = self.peek()
+        assert ty_key is not None
+        p = self.TYPE_PARSER.get(ty_key)
+        if p is None:
+            raise NotImplementedType(f"Unimplemented type {ty_key}")
+        ty = p(self)
+        self.parse_characters(")")
+        return Ty(ty)
 
     def parse_optional_type_decl_field(self) -> tuple[str, tuple[Field, ...]] | None:
         if self.parse_characters("None"):
@@ -106,10 +130,24 @@ class ASLParser(BaseASLParser):
         # TODO: parse fields
         return T_Exception(())
 
+    def parse_record(self) -> T_Record:
+        self.parse_characters("record")
+        # TODO: parse fields
+        return T_Record(())
+
+    TYPE_PARSER = {
+        "exception": parse_exception,
+        "record": parse_record,
+    }
+
     def parse_type(self) -> Ty:
-        if self.peek() == "exception":
-            return Ty(self.parse_exception())
-        raise NotImplementedError()
+        ty_key = self.peek()
+        assert ty_key is not None
+        p = self.TYPE_PARSER.get(ty_key)
+        if p is None:
+            raise NotImplementedError(f"Unimplemented type {ty_key}")
+        ty = p(self)
+        return Ty(ty)
 
     def parse_type_decl(self) -> D_TypeDecl:
         self.parse_characters("type")
