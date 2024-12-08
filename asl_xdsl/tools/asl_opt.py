@@ -1,6 +1,8 @@
 from typing import IO
 
+from xdsl.dialects.builtin import ModuleOp
 from xdsl.parser import Input
+from xdsl.traits import CallableOpInterface
 from xdsl.xdsl_opt_main import xDSLOptMain
 
 from asl_xdsl.dialects.asl import ASLDialect
@@ -16,7 +18,31 @@ class ASLOptMain(xDSLOptMain):
         return super().register_all_passes()
 
     def register_all_targets(self):
-        return super().register_all_targets()
+        super().register_all_targets()
+
+        def interpret_target(module: ModuleOp, output: IO[str]):
+            from xdsl.interpreter import Interpreter
+
+            from asl_xdsl.interpreters.asl import ASLFunctions
+
+            interpreter = Interpreter(module, file=output)
+            interpreter.register_implementations(ASLFunctions())
+            op = interpreter.get_op_for_symbol("main")
+            trait = op.get_trait(CallableOpInterface)
+            assert trait is not None
+
+            result = interpreter.call_op(op)
+            if result:
+                if len(result) == 1:
+                    print(f"result: {result[0]}", file=output)
+                else:
+                    print("result: (", file=output)
+                    print(",\n".join(f"    {res}" for res in result), file=output)
+                    print(")", file=output)
+            else:
+                print("result: ()", file=output)
+
+        self.available_targets["exec"] = interpret_target
 
     def register_all_frontends(self):
         super().register_all_frontends()
