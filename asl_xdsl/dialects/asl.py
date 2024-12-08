@@ -822,7 +822,7 @@ class ReturnOp(IRDLOperation):
 
     assembly_format = "($args^ `:` type($args))? attr-dict"
 
-    def __init__(self, value: SSAValue):
+    def __init__(self, value: Sequence[SSAValue]):
         super().__init__(operands=[value])
 
 
