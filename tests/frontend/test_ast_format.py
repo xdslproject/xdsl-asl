@@ -2,11 +2,12 @@ import pytest
 
 from asl_xdsl.frontend.ast import (
     AST,
+    Annotated,
     D_TypeDecl,
     Decl,
     T_Exception,
     T_Record,
-    Ty,
+    TypeDesc,
 )
 from asl_xdsl.frontend.parser import ASTParser
 
@@ -40,25 +41,29 @@ def test_parse_record():
 @pytest.mark.parametrize(
     "serialized, deserialized",
     [
-        ("annot (T_Exception [])", Ty(T_Exception(()))),
-        ("annot (T_Record [])", Ty(T_Record(()))),
+        ("T_Exception []", TypeDesc(T_Exception(()))),
+        ("T_Record []", TypeDesc(T_Record(()))),
     ],
 )
-def test_parse_type(serialized: str, deserialized: Ty):
+def test_parse_type_desc(serialized: str, deserialized: TypeDesc):
     parser = ASTParser(serialized)
-    assert parser.parse_type() == deserialized
+    assert parser.parse_type_desc() == deserialized
     assert parser.peek() is None
 
 
 def test_type_decl():
     parser = ASTParser('D_TypeDecl ("except", annot (T_Exception []), None)')
-    assert parser.parse_type_decl() == D_TypeDecl("except", Ty(T_Exception(())), None)
+    assert parser.parse_type_decl() == D_TypeDecl(
+        "except", Annotated(TypeDesc(T_Exception(()))), None
+    )
     assert parser.peek() is None
 
 
 def test_parse_decl():
     parser = ASTParser('D_TypeDecl ("except", annot (T_Exception []), None)')
-    assert parser.parse_decl() == Decl(D_TypeDecl("except", Ty(T_Exception(())), None))
+    assert parser.parse_decl() == Decl(
+        D_TypeDecl("except", Annotated(TypeDesc(T_Exception(()))), None)
+    )
     assert parser.peek() is None
 
 
@@ -66,6 +71,6 @@ def test_parse_ast():
     parser = ASTParser('[D_TypeDecl ("except", annot (T_Exception []), None)]')
 
     assert parser.parse_ast() == AST(
-        (Decl(D_TypeDecl("except", Ty(T_Exception(())), None)),)
+        (Decl(D_TypeDecl("except", Annotated(TypeDesc(T_Exception(()))), None)),)
     )
     assert parser.peek() is None

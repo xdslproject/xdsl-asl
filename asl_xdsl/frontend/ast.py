@@ -1,15 +1,30 @@
 from __future__ import annotations
 
-from typing import NamedTuple
+from dataclasses import dataclass
+from typing import Generic, NamedTuple, TypeAlias, TypeVar
 
 from asl_xdsl.frontend.printer import Printer
 
+T = TypeVar("T", covariant=True)
 
-class Ty(NamedTuple):
-    ty: T_Exception | T_Record
+
+@dataclass
+class Annotated(Generic[T]):
+    desc: T
 
     def print_asl(self, printer: Printer):
-        self.ty.print_asl(printer)
+        print_asl = getattr(self.desc, "print_asl")
+        print_asl(printer)
+
+
+class TypeDesc(NamedTuple):
+    t: T_Exception | T_Record
+
+    def print_asl(self, printer: Printer):
+        self.t.print_asl(printer)
+
+
+Ty: TypeAlias = Annotated[TypeDesc]
 
 
 class Field(NamedTuple):

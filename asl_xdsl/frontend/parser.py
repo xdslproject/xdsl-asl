@@ -1,17 +1,24 @@
-from types import NotImplementedType
+from __future__ import annotations
+
+from collections.abc import Callable
+from typing import TypeVar
 
 from xdsl.parser import GenericParser, Input, ParserState
 
 from asl_xdsl.frontend.ast import (
     AST,
+    Annotated,
     D_TypeDecl,
     Decl,
     Field,
     T_Exception,
     T_Record,
     Ty,
+    TypeDesc,
 )
 from asl_xdsl.frontend.lexer import ASLLexer, ASLTokenKind
+
+_T = TypeVar("_T")
 
 
 class BaseASLParser(GenericParser[ASLTokenKind]):
@@ -83,17 +90,24 @@ class ASTParser(BaseASLParser):
         "T_Record": parse_record,
     }
 
-    def parse_type(self) -> Ty:
-        self.parse_characters("annot")
-        self.parse_characters("(")
+    def parse_type_desc(self) -> TypeDesc:
         ty_key = self.peek()
         assert ty_key is not None
         p = self.TYPE_PARSER.get(ty_key)
         if p is None:
-            raise NotImplementedType(f"Unimplemented type {ty_key}")
+            raise NotImplementedError(f"Unimplemented type {ty_key}")
         ty = p(self)
+        return TypeDesc(ty)
+
+    def parse_annotated(self, inner: Callable[[ASTParser], _T]) -> Annotated[_T]:
+        self.parse_characters("annot")
+        self.parse_characters("(")
+        res = inner(self)
         self.parse_characters(")")
-        return Ty(ty)
+        return Annotated(res)
+
+    def parse_ty(self) -> Ty:
+        return self.parse_annotated(ASTParser.parse_type_desc)
 
     def parse_optional_type_decl_field(self) -> tuple[str, tuple[Field, ...]] | None:
         if self.parse_characters("None"):
@@ -106,7 +120,7 @@ class ASTParser(BaseASLParser):
         self.parse_characters("(")
         id = self.parse_str_literal()
         self.parse_characters(",")
-        ty = self.parse_type()
+        ty = self.parse_ty()
         self.parse_characters(",")
         fields = self.parse_optional_type_decl_field()
         self.parse_characters(")")
@@ -140,20 +154,23 @@ class ASLParser(BaseASLParser):
         "record": parse_record,
     }
 
-    def parse_type(self) -> Ty:
+    def parse_type_desc(self) -> TypeDesc:
         ty_key = self.peek()
         assert ty_key is not None
         p = self.TYPE_PARSER.get(ty_key)
         if p is None:
             raise NotImplementedError(f"Unimplemented type {ty_key}")
         ty = p(self)
-        return Ty(ty)
+        return TypeDesc(ty)
+
+    def parse_ty(self) -> Ty:
+        return Annotated(self.parse_type_desc())
 
     def parse_type_decl(self) -> D_TypeDecl:
         self.parse_characters("type")
         id = self.parse_identifier()
         self.parse_characters("of")
-        ty = self.parse_type()
+        ty = self.parse_ty()
         self._parse_optional_token(ASLTokenKind.SEMICOLON)
         return D_TypeDecl(id, ty, None)
 
