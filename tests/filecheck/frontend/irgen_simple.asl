@@ -1,4 +1,11 @@
-// RUN: asl-opt %s | filecheck %s
+// RUN: asl-opt --split-input-file %s | filecheck %s
+
+// Empty
+
+// CHECK:       builtin.module {
+// CHECK-NEXT:  }
+
+// -----
 
 func main() => integer
 begin
