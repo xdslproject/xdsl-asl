@@ -5,6 +5,7 @@ from typing import NamedTuple
 from xdsl.parser import Input
 
 from asl_xdsl.frontend.parser import Parser
+from asl_xdsl.frontend.printer import Printer
 
 
 class Ty(NamedTuple):
@@ -20,6 +21,9 @@ class Ty(NamedTuple):
         parser.parse_characters(")")
         return Ty(ty)
 
+    def print_asl(self, printer: Printer):
+        self.ty.print_asl(printer)
+
 
 class Field(NamedTuple):
     id: str
@@ -27,7 +31,10 @@ class Field(NamedTuple):
 
     @staticmethod
     def parse_ast(parser: Parser) -> Field:
-        raise NotImplementedError
+        raise NotImplementedError()
+
+    def print_asl(self, printer: Printer) -> None:
+        raise NotImplementedError()
 
 
 class T_Exception(NamedTuple):
@@ -47,6 +54,11 @@ class T_Exception(NamedTuple):
     def parse_ast(parser: Parser) -> T_Exception:
         parser.parse_characters(T_Exception.__name__)
         return T_Exception.parse_ast_tail(parser)
+
+    def print_asl(self, printer: Printer) -> None:
+        if self.fields:
+            raise NotImplementedError()
+        printer.print_string("exception")
 
 
 class D_TypeDecl(NamedTuple):
@@ -79,6 +91,13 @@ class D_TypeDecl(NamedTuple):
         parser.parse_characters(D_TypeDecl.__name__)
         return D_TypeDecl.parse_ast_tail(parser)
 
+    def print_asl(self, printer: Printer) -> None:
+        printer.print_string("type ")
+        printer.print_string(self.id)
+        printer.print_string(" of ")
+        self.ty.print_asl(printer)
+        printer.print_string(";\n")
+
 
 class Decl(NamedTuple):
     decl: D_TypeDecl
@@ -90,6 +109,9 @@ class Decl(NamedTuple):
             raise NotImplementedError(f"Unimplemented declaration {id}")
         decl = D_TypeDecl.parse_ast_tail(parser)
         return Decl(decl)
+
+    def print_asl(self, printer: Printer) -> None:
+        self.decl.print_asl(printer)
 
 
 class AST(NamedTuple):
@@ -107,6 +129,10 @@ class AST(NamedTuple):
                 )
             )
         )
+
+    def print_asl(self, printer: Printer) -> None:
+        for decl in self.decls:
+            decl.print_asl(printer)
 
 
 def base_parser(input: str) -> Parser:
