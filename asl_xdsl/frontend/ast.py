@@ -9,6 +9,7 @@ from asl_xdsl.frontend.printer import Printer
 T = TypeVar("T", covariant=True)
 
 
+# region Helpers
 @dataclass
 class Annotated(Generic[T]):
     val: T
@@ -16,6 +17,40 @@ class Annotated(Generic[T]):
     def print_asl(self, printer: Printer):
         print_asl = getattr(self.val, "print_asl")
         print_asl(printer)
+
+
+# endregion
+
+# region Literal
+
+
+class L_Int(NamedTuple):
+    val: int
+
+    def print_asl(self, printer: Printer):
+        printer.print_string(f"{self.val}")
+
+
+Literal: TypeAlias = L_Int
+
+# endregion
+
+
+# region Expressions
+
+
+class E_Literal(NamedTuple):
+    literal: Literal
+
+    def print_asl(self, printer: Printer):
+        self.literal.print_asl(printer)
+
+
+ExprDesc: TypeAlias = E_Literal
+
+Expr: TypeAlias = Annotated[ExprDesc]
+
+# endregion
 
 
 class Field(NamedTuple):
@@ -26,7 +61,69 @@ class Field(NamedTuple):
         raise NotImplementedError()
 
 
+# region: Constraints
+
+
+class UnConstrained(NamedTuple):
+    """
+    The normal, unconstrained, integer type.
+    """
+
+    def print_asl(self, printer: Printer) -> None:
+        printer.print_string("integer")
+
+
+class WellConstrained(NamedTuple):
+    """
+    An integer type constrained from ASL syntax: it is the union of each constraint in
+    the list.
+    """
+
+    # of int_constraint list
+
+    def print_asl(self, printer: Printer) -> None:
+        raise NotImplementedError()
+
+
+class PendingConstrained(NamedTuple):
+    """
+    An integer type whose constraint will be inferred during type-checking.
+    """
+
+    def print_asl(self, printer: Printer) -> None:
+        raise NotImplementedError()
+
+
+class Parameterized(NamedTuple):
+    """
+    A parameterized integer, the default type for parameters of function at compile
+    time, with a unique identifier and the variable bearing its name.
+    """
+
+    # of uid * identifier
+
+    def print_asl(self, printer: Printer) -> None:
+        raise NotImplementedError()
+
+
+ConstraintKind: TypeAlias = (
+    UnConstrained | WellConstrained | PendingConstrained | Parameterized
+)
+"""
+The constraint_kind constrains an integer type to a certain subset.
+"""
+
+# endregion
+
+
 # region: Types
+
+
+class T_Int(NamedTuple):
+    kind: ConstraintKind
+
+    def print_asl(self, printer: Printer) -> None:
+        self.kind.print_asl(printer)
 
 
 class T_Exception(NamedTuple):
@@ -47,7 +144,7 @@ class T_Record(NamedTuple):
         printer.print_string("record")
 
 
-TypeDesc: TypeAlias = T_Exception | T_Record
+TypeDesc: TypeAlias = T_Int | T_Exception | T_Record
 
 
 Ty: TypeAlias = Annotated[TypeDesc]
@@ -72,10 +169,24 @@ class TypingRule(Enum):
     SPass = auto()
 
 
-class SPass(NamedTuple): ...
+class SPass(NamedTuple):
+    def print_asl(self, printer: Printer): ...
 
 
-StmtDesc: TypeAlias = SPass
+class SReturn(NamedTuple):
+    expr: Expr | None
+
+    def print_asl(self, printer: Printer):
+        # TODO: proper indentation
+        printer.print_string("    ")
+        printer.print_string("return")
+        if self.expr is not None:
+            printer.print_string(" ")
+            self.expr.print_asl(printer)
+        printer.print_string(";\n")
+
+
+StmtDesc: TypeAlias = SPass | SReturn
 
 Stmt: TypeAlias = Annotated[StmtDesc]
 
@@ -123,7 +234,7 @@ class D_Func(NamedTuple):
     name: str
     args: None
     body: SubprogramBody
-    return_type: None
+    return_type: Ty | None
     parameters: None
     subprogram_type: SubprogramType
 
@@ -131,14 +242,11 @@ class D_Func(NamedTuple):
         if isinstance(self.body, SB_Primitive):
             raise NotImplementedError()
         sb = self.body.stmt.val
-        match sb:
-            case SPass():
-                return
+        # TODO: indentation
+        sb.print_asl(printer)
 
     def print_asl(self, printer: Printer):
         if self.args is not None:
-            raise NotImplementedError()
-        if self.return_type is not None:
             raise NotImplementedError()
         if self.parameters is not None:
             raise NotImplementedError()
@@ -146,7 +254,11 @@ class D_Func(NamedTuple):
             raise NotImplementedError()
         printer.print_string("func ")
         printer.print_string(self.name)
-        printer.print_string("()\n")
+        printer.print_string("()")
+        if self.return_type is not None:
+            printer.print_string(" => ")
+            self.return_type.print_asl(printer)
+        printer.print_string("\n")
         printer.print_string("begin\n")
         self.print_subprogram_body(printer)
         printer.print_string("end;\n")

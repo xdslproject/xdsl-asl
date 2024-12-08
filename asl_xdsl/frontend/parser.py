@@ -12,14 +12,23 @@ from asl_xdsl.frontend.ast import (
     D_Func,
     D_TypeDecl,
     Decl,
+    E_Literal,
+    Expr,
     Field,
+    L_Int,
+    Literal,
     SPass,
+    SReturn,
+    Stmt,
+    StmtDesc,
     SubprogramBody,
     SubprogramType,
     T_Exception,
+    T_Int,
     T_Record,
     Ty,
     TypeDesc,
+    UnConstrained,
 )
 from asl_xdsl.frontend.lexer import ASLLexer, ASLTokenKind
 
@@ -143,6 +152,11 @@ class ASTParser(BaseASLParser):
 
 
 class ASLParser(BaseASLParser):
+    def parse_integer(self) -> T_Int:
+        self.parse_characters("integer")
+        # TODO: parse constraints
+        return T_Int(UnConstrained())
+
     def parse_exception(self) -> T_Exception:
         self.parse_characters("exception")
         # TODO: parse fields
@@ -156,6 +170,7 @@ class ASLParser(BaseASLParser):
     TYPE_PARSER = {
         "exception": parse_exception,
         "record": parse_record,
+        "integer": parse_integer,
     }
 
     def parse_type_desc(self) -> TypeDesc:
@@ -177,16 +192,51 @@ class ASLParser(BaseASLParser):
         self._parse_optional_token(ASLTokenKind.SEMICOLON)
         return D_TypeDecl(id, ty, None)
 
+    def parse_optional_literal(self) -> Literal | None:
+        # TODO: proper integer literal
+        if (tok := self._parse_optional_token(ASLTokenKind.NUMBER)) is not None:
+            return L_Int(int(tok.text))
+
+    def parse_optional_expr(self) -> Expr | None:
+        if (lit := self.parse_optional_literal()) is not None:
+            return Annotated(E_Literal(lit))
+
+    def parse_return(self) -> SReturn:
+        self.parse_characters("return")
+        expr = self.parse_optional_expr()
+        self.parse_characters(";")
+        return SReturn(expr)
+
+    STMT_PARSER = {
+        "return": parse_return,
+    }
+
+    def parse_stmt_desc(self) -> StmtDesc:
+        next_token = self.peek()
+        if next_token == "end":
+            return SPass()
+        if next_token is None:
+            raise NotImplementedError(f"Stmt beginning with {next_token}")
+        p = self.STMT_PARSER.get(next_token)
+        if p is None:
+            raise NotImplementedError(f"Stmt beginning with {next_token}")
+        return p(self)
+
+    def parse_stmt(self) -> Stmt:
+        return Annotated(self.parse_stmt_desc())
+
     def parse_subprogram_body(self) -> SubprogramBody:
-        if self.peek() == "end":
-            return SB_ASL(Annotated(SPass()))
-        raise NotImplementedError()
+        return SB_ASL(self.parse_stmt())
 
     def parse_func_decl(self) -> D_Func:
         self.parse_characters("func")
         name = self.parse_identifier()
         self.parse_characters("(")
         self.parse_characters(")")
+        if self._parse_optional_token(ASLTokenKind.ARROW):
+            return_type = self.parse_ty()
+        else:
+            return_type = None
         self.parse_characters("begin")
         body = self.parse_subprogram_body()
         self.parse_characters("end")
@@ -195,7 +245,7 @@ class ASLParser(BaseASLParser):
             name,
             None,
             body,
-            None,
+            return_type,
             None,
             SubprogramType.ST_Procedure,
         )

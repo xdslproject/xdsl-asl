@@ -21,6 +21,8 @@ class ASLTokenKind(Enum):
     EQ = auto()
     COMMA = auto()
 
+    ARROW = auto()
+
     EOF = auto()
 
     RETURN = auto()
@@ -60,6 +62,12 @@ SINGLE_CHAR_TOKENS = {
     "-": ASLTokenKind.OPERATOR,
     "*": ASLTokenKind.OPERATOR,
     "/": ASLTokenKind.OPERATOR,
+}
+
+MULTI_CHAR_TOKENS = {
+    "=": {
+        "=>": ASLTokenKind.ARROW,
+    }
 }
 
 ASLToken: TypeAlias = Token[ASLTokenKind]
@@ -130,6 +138,14 @@ class ASLLexer(Lexer[ASLTokenKind]):
 
         if current_char == '"':
             return self._lex_string_literal(start_pos)
+
+        # multi-char tokens
+        multi_char_token_map = MULTI_CHAR_TOKENS.get(current_char)
+        if multi_char_token_map is not None:
+            for key, kind in multi_char_token_map.items():
+                if self.input.content.startswith(key, start_pos):
+                    self.pos += len(key)
+                    return self._form_token(kind, start_pos)
 
         # single-char punctuation that are not part of a multi-char token
         single_char_token_kind = SINGLE_CHAR_TOKENS.get(current_char)
