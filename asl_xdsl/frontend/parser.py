@@ -101,8 +101,7 @@ class ASTParser(BaseASLParser):
         p = self.TYPE_PARSER.get(ty_key)
         if p is None:
             raise NotImplementedError(f"Unimplemented type {ty_key}")
-        ty = p(self)
-        return TypeDesc(ty)
+        return p(self)
 
     def parse_annotated(self, inner: Callable[[ASTParser], _T]) -> Annotated[_T]:
         self.parse_characters("annot")
@@ -165,8 +164,7 @@ class ASLParser(BaseASLParser):
         p = self.TYPE_PARSER.get(ty_key)
         if p is None:
             raise NotImplementedError(f"Unimplemented type {ty_key}")
-        ty = p(self)
-        return TypeDesc(ty)
+        return p(self)
 
     def parse_ty(self) -> Ty:
         return Annotated(self.parse_type_desc())

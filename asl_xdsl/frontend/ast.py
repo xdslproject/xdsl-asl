@@ -18,22 +18,15 @@ class Annotated(Generic[T]):
         print_asl(printer)
 
 
-class TypeDesc(NamedTuple):
-    t: T_Exception | T_Record
-
-    def print_asl(self, printer: Printer):
-        self.t.print_asl(printer)
-
-
-Ty: TypeAlias = Annotated[TypeDesc]
-
-
 class Field(NamedTuple):
     id: str
     ty: Ty
 
     def print_asl(self, printer: Printer) -> None:
         raise NotImplementedError()
+
+
+# region: Types
 
 
 class T_Exception(NamedTuple):
@@ -52,6 +45,14 @@ class T_Record(NamedTuple):
         if self.fields:
             raise NotImplementedError()
         printer.print_string("record")
+
+
+TypeDesc: TypeAlias = T_Exception | T_Record
+
+
+Ty: TypeAlias = Annotated[TypeDesc]
+
+# endregion
 
 
 class D_TypeDecl(NamedTuple):

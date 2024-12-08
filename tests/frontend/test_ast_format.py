@@ -41,8 +41,8 @@ def test_parse_record():
 @pytest.mark.parametrize(
     "serialized, deserialized",
     [
-        ("T_Exception []", TypeDesc(T_Exception(()))),
-        ("T_Record []", TypeDesc(T_Record(()))),
+        ("T_Exception []", (T_Exception(()))),
+        ("T_Record []", (T_Record(()))),
     ],
 )
 def test_parse_type_desc(serialized: str, deserialized: TypeDesc):
@@ -54,7 +54,7 @@ def test_parse_type_desc(serialized: str, deserialized: TypeDesc):
 def test_type_decl():
     parser = ASTParser('D_TypeDecl ("except", annot (T_Exception []), None)')
     assert parser.parse_type_decl() == D_TypeDecl(
-        "except", Annotated(TypeDesc(T_Exception(()))), None
+        "except", Annotated(T_Exception(())), None
     )
     assert parser.peek() is None
 
@@ -62,7 +62,7 @@ def test_type_decl():
 def test_parse_decl():
     parser = ASTParser('D_TypeDecl ("except", annot (T_Exception []), None)')
     assert parser.parse_decl() == Decl(
-        D_TypeDecl("except", Annotated(TypeDesc(T_Exception(()))), None)
+        D_TypeDecl("except", Annotated(T_Exception(())), None)
     )
     assert parser.peek() is None
 
@@ -71,6 +71,6 @@ def test_parse_ast():
     parser = ASTParser('[D_TypeDecl ("except", annot (T_Exception []), None)]')
 
     assert parser.parse_ast() == AST(
-        (Decl(D_TypeDecl("except", Annotated(TypeDesc(T_Exception(()))), None)),)
+        (Decl(D_TypeDecl("except", Annotated((T_Exception(()))), None)),)
     )
     assert parser.peek() is None
