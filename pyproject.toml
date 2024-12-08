@@ -24,6 +24,7 @@ xdsl_smt = ["py.typed"]
 
 [project.scripts]
 asl-opt = "asl_xdsl.tools.asl_opt:main"
+asl-frontend = "asl_xdsl.tools.asl_frontend:main"
 
 [build-system]
 requires = ["setuptools>=61", "wheel"]
