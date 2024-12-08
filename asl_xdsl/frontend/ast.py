@@ -24,6 +24,13 @@ class Ty(NamedTuple):
     def print_asl(self, printer: Printer):
         self.ty.print_asl(printer)
 
+    @staticmethod
+    def parse_asl(parser: Parser) -> Ty:
+        if parser.parse_optional_identifier() == "exception":
+            return Ty(T_Exception.parse_asl_tail(parser))
+        else:
+            raise NotImplementedError()
+
 
 class Field(NamedTuple):
     id: str
@@ -54,6 +61,14 @@ class T_Exception(NamedTuple):
     def parse_ast(parser: Parser) -> T_Exception:
         parser.parse_characters(T_Exception.__name__)
         return T_Exception.parse_ast_tail(parser)
+
+    @staticmethod
+    def parse_asl_tail(parser: Parser) -> T_Exception:
+        """
+        Everything after `exception`
+        """
+        # TODO: parse fields
+        return T_Exception(())
 
     def print_asl(self, printer: Printer) -> None:
         if self.fields:
@@ -98,6 +113,19 @@ class D_TypeDecl(NamedTuple):
         self.ty.print_asl(printer)
         printer.print_string(";\n")
 
+    @staticmethod
+    def parse_asl_tail(parser: Parser) -> D_TypeDecl:
+        """
+        Parse everything after `type`
+        """
+        # TODO: be more flexible with whitespace
+        parser.parse_characters(" ")
+        id = parser.parse_identifier()
+        parser.parse_characters(" of ")
+        ty = Ty.parse_asl(parser)
+        parser.parse_characters(";\n")
+        return D_TypeDecl(id, ty, None)
+
 
 class Decl(NamedTuple):
     decl: D_TypeDecl
@@ -112,6 +140,13 @@ class Decl(NamedTuple):
 
     def print_asl(self, printer: Printer) -> None:
         self.decl.print_asl(printer)
+
+    @staticmethod
+    def parse_optional_asl(parser: Parser) -> Decl | None:
+        pos = parser.pos
+        if parser.parse_optional_identifier() == "type":
+            return Decl(D_TypeDecl.parse_asl_tail(parser))
+        parser.pos = pos
 
 
 class AST(NamedTuple):
@@ -133,6 +168,10 @@ class AST(NamedTuple):
     def print_asl(self, printer: Printer) -> None:
         for decl in self.decls:
             decl.print_asl(printer)
+
+    @staticmethod
+    def parse_asl(parser: Parser) -> AST:
+        return AST(parser.parse_many(Decl.parse_optional_asl))
 
 
 def base_parser(input: str) -> Parser:
