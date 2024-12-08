@@ -13,12 +13,10 @@ class Ty(NamedTuple):
     @staticmethod
     def parse_ast(parser: Parser) -> Ty:
         parser.parse_characters("annot (")
-        id = parser.expect(
-            lambda parser: parser.peek_optional(Parser.IDENTIFIER), "Ty"
-        )[0]
+        id = parser.parse_identifier()
         if id != T_Exception.__name__:
             raise NotImplementedError(f"Unimplemented type {id}")
-        ty = T_Exception.parse_ast(parser)
+        ty = T_Exception.parse_ast_tail(parser)
         parser.parse_characters(")")
         return Ty(ty)
 
