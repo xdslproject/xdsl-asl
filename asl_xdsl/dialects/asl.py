@@ -25,11 +25,11 @@ from xdsl.irdl import (
     irdl_attr_definition,
     irdl_op_definition,
     operand_def,
+    opt_operand_def,
     prop_def,
     region_def,
     result_def,
     traits_def,
-    var_operand_def,
 )
 from xdsl.parser import AttrParser, Parser
 from xdsl.printer import Printer
@@ -767,7 +767,8 @@ class FuncOp(IRDLOperation):
 
         if not isinstance(last_op := entry_block.last_op, ReturnOp):
             raise VerifyException("Expected last operation of function to be a return")
-        if tuple(arg.type for arg in last_op.args) != self.function_type.outputs.data:
+        arg_types = () if last_op.arg is None else (last_op.arg.type,)
+        if arg_types != self.function_type.outputs.data:
             raise VerifyException(
                 "Expected return types to match the function output types"
             )
@@ -816,13 +817,13 @@ class ReturnOp(IRDLOperation):
 
     name = "asl.return"
 
-    args = var_operand_def()
+    arg = opt_operand_def()
 
     traits = traits_def(HasParent(FuncOp), IsTerminator())
 
-    assembly_format = "($args^ `:` type($args))? attr-dict"
+    assembly_format = "($arg^ `:` type($arg))? attr-dict"
 
-    def __init__(self, value: Sequence[SSAValue]):
+    def __init__(self, value: SSAValue | None = None):
         super().__init__(operands=[value])
 
 
