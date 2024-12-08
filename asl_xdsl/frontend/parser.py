@@ -179,6 +179,14 @@ class Parser:
             res.append(element)
         return res
 
+    IDENTIFIER = re.compile("[A-z_][A-z_\\d]*")
+
+    def parse_optional_identifier(self) -> str | None:
+        return self.parse_optional_pattern(Parser.IDENTIFIER)
+
+    def parse_identifier(self) -> str:
+        return self.expect(Parser.parse_optional_identifier, "identifier")
+
     def parse_list(
         self,
         el: Callable[["Parser"], T],

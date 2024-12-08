@@ -1,21 +1,10 @@
 from __future__ import annotations
 
-import re
 from typing import NamedTuple
 
 from xdsl.parser import Input
 
 from asl_xdsl.frontend.parser import Parser
-
-IDENTIFIER = re.compile("[A-z_][A-z_\\d]*")
-
-
-def parse_optional_identifier(parser: Parser) -> str | None:
-    return parser.parse_optional_pattern(IDENTIFIER)
-
-
-def parse_identifier(parser: Parser) -> str:
-    return parser.expect(parse_optional_identifier, "identifier")
 
 
 class Ty(NamedTuple):
@@ -24,7 +13,9 @@ class Ty(NamedTuple):
     @staticmethod
     def parse_ast(parser: Parser) -> Ty:
         parser.parse_characters("annot (")
-        id = parser.expect(lambda parser: parser.peek_optional(IDENTIFIER), "Ty")[0]
+        id = parser.expect(
+            lambda parser: parser.peek_optional(Parser.IDENTIFIER), "Ty"
+        )[0]
         if id != T_Exception.__name__:
             raise NotImplementedError(f"Unimplemented type {id}")
         ty = T_Exception.parse_ast(parser)
@@ -96,7 +87,7 @@ class Decl(NamedTuple):
 
     @staticmethod
     def parse_ast(parser: Parser) -> Decl:
-        id = parser.expect(parse_optional_identifier, "Decl")
+        id = parser.parse_identifier()
         if id != D_TypeDecl.__name__:
             raise NotImplementedError(f"Unimplemented declaration {id}")
         decl = D_TypeDecl.parse_ast_tail(parser)
