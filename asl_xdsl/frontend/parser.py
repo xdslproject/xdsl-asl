@@ -47,9 +47,6 @@ class Parser:
             lambda parser: parser.parse_optional_characters(chars), chars
         )
 
-    def peek_characters(self, chars: str) -> bool:
-        return self.input.content.startswith(chars, self.pos)
-
     def peek_optional(self, pattern: re.Pattern[str]):
         if (match := pattern.match(self.input.content, self.pos)) is not None:
             end_pos = match.regs[0][1]
