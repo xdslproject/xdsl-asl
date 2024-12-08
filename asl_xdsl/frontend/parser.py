@@ -7,10 +7,15 @@ from xdsl.parser import GenericParser, Input, ParserState
 
 from asl_xdsl.frontend.ast import (
     AST,
+    SB_ASL,
     Annotated,
+    D_Func,
     D_TypeDecl,
     Decl,
     Field,
+    SPass,
+    SubprogramBody,
+    SubprogramType,
     T_Exception,
     T_Record,
     Ty,
@@ -174,10 +179,42 @@ class ASLParser(BaseASLParser):
         self._parse_optional_token(ASLTokenKind.SEMICOLON)
         return D_TypeDecl(id, ty, None)
 
+    def parse_subprogram_body(self) -> SubprogramBody:
+        if self.peek() == "end":
+            return SB_ASL(Annotated(SPass()))
+        raise NotImplementedError()
+
+    def parse_func_decl(self) -> D_Func:
+        self.parse_characters("func")
+        name = self.parse_identifier()
+        self.parse_characters("(")
+        self.parse_characters(")")
+        self.parse_characters("begin")
+        body = self.parse_subprogram_body()
+        self.parse_characters("end")
+        self.parse_characters(";")
+        return D_Func(
+            name,
+            None,
+            body,
+            None,
+            None,
+            SubprogramType.ST_Procedure,
+        )
+
+    DECL_PARSER = {
+        "type": parse_type_decl,
+        "func": parse_func_decl,
+    }
+
     def parse_decl(self) -> Decl:
-        if self.peek() == "type":
-            return Decl(self.parse_type_decl())
-        raise NotImplementedError(f"Decl {self.peek()} not implemented")
+        decl_key = self.peek()
+        assert decl_key is not None
+        p = self.DECL_PARSER.get(decl_key)
+        if p is None:
+            raise NotImplementedError(f"Unimplemented type {decl_key}")
+        decl = p(self)
+        return Decl(decl)
 
     def parse_ast(self) -> AST:
         decls: list[Decl] = []
