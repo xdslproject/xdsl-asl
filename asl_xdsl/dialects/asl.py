@@ -311,7 +311,7 @@ class ConstantIntOp(IRDLOperation):
         if isinstance(value, int):
             value = builtin.IntAttr(value)
         super().__init__(
-            result_types=[IntegerType([ConstraintExactAttr(value.data)])],
+            result_types=[IntegerType()],
             properties={"value": value},
             attributes=attr_dict,
         )
