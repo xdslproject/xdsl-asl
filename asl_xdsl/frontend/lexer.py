@@ -105,7 +105,7 @@ class ASLLexer(Lexer[ASLTokenKind]):
         self.pos = match.end()
         return match
 
-    _whitespace_regex = re.compile(r"((#[^\n]*(\n)?)|(\s+))*", re.ASCII)
+    _whitespace_regex = re.compile(r"((//[^\n]*(\n)?)|(\s+))*", re.ASCII)
 
     def _consume_whitespace(self) -> None:
         """
