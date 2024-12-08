@@ -43,6 +43,88 @@ from xdsl.traits import (
 
 
 @irdl_attr_definition
+class ConstraintExactAttr(ParametrizedAttribute):
+    """A constraint on an integer attribute to be exactly equal to a value."""
+
+    name = "asl.int_constraint_exact"
+
+    value_attr: ParameterDef[builtin.IntAttr]
+
+    def __init__(self, value: int):
+        super().__init__([builtin.IntAttr(value)])
+
+    @property
+    def value(self) -> int:
+        return self.value_attr.data
+
+    @classmethod
+    def parse_parameter(cls, parser: AttrParser) -> int:
+        """Parse the attribute parameter."""
+        with parser.in_angle_brackets():
+            value = parser.parse_integer()
+        return value
+
+    def print_parameter(self, printer: Printer) -> None:
+        """Print the attribute parameter."""
+        printer.print("<", self.value, ">")
+
+
+@irdl_attr_definition
+class ConstraintRangeAttr(ParametrizedAttribute):
+    """A constraint on an integer attribute to be within a range."""
+
+    name = "asl.int_constraint_range"
+
+    min_value_attr: ParameterDef[builtin.IntAttr]
+    max_value_attr: ParameterDef[builtin.IntAttr]
+
+    def __init__(self, min_value: int, max_value: int):
+        super().__init__([builtin.IntAttr(min_value), builtin.IntAttr(max_value)])
+
+    @property
+    def min_value(self) -> int:
+        return self.min_value_attr.data
+
+    @property
+    def max_value(self) -> int:
+        return self.max_value_attr.data
+
+    @classmethod
+    def parse_parameters(cls, parser: AttrParser) -> Sequence[Attribute]:
+        """Parse the attribute parameters."""
+        with parser.in_angle_brackets():
+            min_value = parser.parse_integer()
+            parser.parse_characters(":")
+            max_value = parser.parse_integer()
+        return [builtin.IntAttr(min_value), builtin.IntAttr(max_value)]
+
+    def print_parameters(self, printer: Printer) -> None:
+        """Print the attribute parameters."""
+        printer.print("<", self.min_value, ":", self.max_value, ">")
+
+
+def _parse_integer_constraint(
+    parser: AttrParser,
+) -> ConstraintExactAttr | ConstraintRangeAttr:
+    """Parse an integer constraint using a shorthand syntax."""
+    value = parser.parse_integer()
+    if parser.parse_optional_characters(":") is None:
+        return ConstraintExactAttr(value)
+    second_value = parser.parse_integer()
+    return ConstraintRangeAttr(value, second_value)
+
+
+def _print_integer_constraint(
+    constraint: ConstraintExactAttr | ConstraintRangeAttr, printer: Printer
+):
+    """Print an integer constraint using a shorthand syntax."""
+    if isinstance(constraint, ConstraintExactAttr):
+        printer.print(constraint.value)
+    else:
+        printer.print(constraint.min_value, ":", constraint.max_value)
+
+
+@irdl_attr_definition
 class BoolType(ParametrizedAttribute, TypeAttribute):
     """A boolean type."""
 
@@ -73,6 +155,39 @@ class IntegerType(ParametrizedAttribute, TypeAttribute):
     """An arbitrary-precision integer type."""
 
     name = "asl.int"
+
+    constraints_attr: ParameterDef[
+        builtin.ArrayAttr[ConstraintExactAttr | ConstraintRangeAttr]
+    ]
+
+    def __init__(self, constraints: Sequence[Attribute] = ()):
+        super().__init__([builtin.ArrayAttr(constraints)])
+
+    @property
+    def constraints(self) -> Sequence[ConstraintExactAttr | ConstraintRangeAttr]:
+        return self.constraints_attr.data
+
+    @classmethod
+    def parse_parameters(cls, parser: AttrParser) -> Sequence[Attribute]:
+        # Integer types with no constraints have no angle brackets
+        if parser.parse_optional_characters("<") is None:
+            return [builtin.ArrayAttr(())]
+
+        constraints = parser.parse_comma_separated_list(
+            parser.Delimiter.NONE, lambda: _parse_integer_constraint(parser)
+        )
+        parser.parse_characters(">")
+        return [builtin.ArrayAttr(constraints)]
+
+    def print_parameters(self, printer: Printer) -> None:
+        if not self.constraints:
+            return
+        printer.print("<")
+        printer.print_list(
+            self.constraints,
+            lambda constr: _print_integer_constraint(constr, printer),
+        )
+        printer.print(">")
 
 
 @irdl_attr_definition
@@ -188,7 +303,7 @@ class ConstantIntOp(IRDLOperation):
     name = "asl.constant_int"
 
     value = prop_def(builtin.IntAttr)
-    res = result_def(IntegerType())
+    res = result_def(IntegerType)
 
     def __init__(
         self, value: int | builtin.IntAttr, attr_dict: Mapping[str, Attribute] = {}
@@ -196,7 +311,7 @@ class ConstantIntOp(IRDLOperation):
         if isinstance(value, int):
             value = builtin.IntAttr(value)
         super().__init__(
-            result_types=[IntegerType()],
+            result_types=[IntegerType([ConstraintExactAttr(value.data)])],
             properties={"value": value},
             attributes=attr_dict,
         )
@@ -347,10 +462,10 @@ class NegateIntOp(IRDLOperation):
 
     name = "asl.negate_int"
 
-    arg = operand_def(IntegerType())
-    res = result_def(IntegerType())
+    arg = operand_def(IntegerType)
+    res = result_def(IntegerType)
 
-    assembly_format = "$arg attr-dict"
+    assembly_format = "$arg `:` type($arg) `->` type($res) attr-dict"
 
     def __init__(self, arg: SSAValue, attr_dict: Mapping[str, Attribute] = {}):
         super().__init__(
@@ -363,11 +478,13 @@ class NegateIntOp(IRDLOperation):
 class BinaryIntOp(IRDLOperation):
     """A binary integer operation."""
 
-    lhs = operand_def(IntegerType())
-    rhs = operand_def(IntegerType())
-    res = result_def(IntegerType())
+    lhs = operand_def(IntegerType)
+    rhs = operand_def(IntegerType)
+    res = result_def(IntegerType)
 
-    assembly_format = "$lhs `,` $rhs attr-dict"
+    assembly_format = (
+        "$lhs `,` $rhs `:` `(` type($lhs) `,` type($rhs) `)` `->` type($res) attr-dict"
+    )
 
     def __init__(
         self,
@@ -457,11 +574,13 @@ class FRemIntOp(BinaryIntOp):
 class PredicateIntOp(IRDLOperation):
     """An integer predicate operation."""
 
-    lhs = operand_def(IntegerType())
-    rhs = operand_def(IntegerType())
+    lhs = operand_def(IntegerType)
+    rhs = operand_def(IntegerType)
     res = result_def(BoolType())
 
-    assembly_format = "$lhs `,` $rhs attr-dict"
+    assembly_format = (
+        "$lhs `,` $rhs `:` `(` type($lhs) `,` type($rhs) `)` `->` type($res) attr-dict"
+    )
 
     def __init__(
         self,
@@ -838,7 +957,9 @@ class SliceSingleOp(IRDLOperation):
 
     res = result_def(BitVectorType(1))
 
-    assembly_format = "$bits `[` $index `]` `:` type($bits) attr-dict"
+    assembly_format = (
+        "$bits `[` $index `]` `:` type($bits) `[` type($index) `]` attr-dict"
+    )
 
     def __init__(
         self,

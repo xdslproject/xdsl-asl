@@ -24,16 +24,16 @@ builtin.module {
     %int1, %int2 = "test.op"() : () -> (!asl.int, !asl.int)
 // CHECK-NEXT:    %int1, %int2 = "test.op"() : () -> (!asl.int, !asl.int)
 
-    %negate_int = asl.negate_int %int1
-    %add_int = asl.add_int %int1, %int2
-    %sub_int = asl.sub_int %int1, %int2
-    %mul_int = asl.mul_int %int1, %int2
-    %exp_int = asl.exp_int %int1, %int2
-    %shiftleft_int = asl.shiftleft_int %int1, %int2
-    %shiftright_int = asl.shiftright_int %int1, %int2
-    %div_int = asl.div_int %int1, %int2
-    %fdiv_int = asl.fdiv_int %int1, %int2
-    %frem_int = asl.frem_int %int1, %int2
+    %negate_int = asl.negate_int %int1 : !asl.int -> !asl.int
+    %add_int = asl.add_int %int1, %int2 : (!asl.int, !asl.int) -> !asl.int
+    %sub_int = asl.sub_int %int1, %int2 : (!asl.int, !asl.int) -> !asl.int
+    %mul_int = asl.mul_int %int1, %int2 : (!asl.int, !asl.int) -> !asl.int
+    %exp_int = asl.exp_int %int1, %int2 : (!asl.int, !asl.int) -> !asl.int
+    %shiftleft_int = asl.shiftleft_int %int1, %int2 : (!asl.int, !asl.int) -> !asl.int
+    %shiftright_int = asl.shiftright_int %int1, %int2 : (!asl.int, !asl.int) -> !asl.int
+    %div_int = asl.div_int %int1, %int2 : (!asl.int, !asl.int) -> !asl.int
+    %fdiv_int = asl.fdiv_int %int1, %int2 : (!asl.int, !asl.int) -> !asl.int
+    %frem_int = asl.frem_int %int1, %int2 : (!asl.int, !asl.int) -> !asl.int
 
 // CHECK-NEXT:    %negate_int = asl.negate_int %int1
 // CHECK-NEXT:    %add_int = asl.add_int %int1, %int2
@@ -46,12 +46,12 @@ builtin.module {
 // CHECK-NEXT:    %fdiv_int = asl.fdiv_int %int1, %int2
 // CHECK-NEXT:    %frem_int = asl.frem_int %int1, %int2
 
-    %eq_int = asl.eq_int %int1, %int2
-    %ne_int = asl.ne_int %int1, %int2
-    %le_int = asl.le_int %int1, %int2
-    %lt_int = asl.lt_int %int1, %int2
-    %ge_int = asl.ge_int %int1, %int2
-    %gt_int = asl.gt_int %int1, %int2
+    %eq_int = asl.eq_int %int1, %int2 : (!asl.int, !asl.int) -> !asl.bool
+    %ne_int = asl.ne_int %int1, %int2 : (!asl.int, !asl.int) -> !asl.bool
+    %le_int = asl.le_int %int1, %int2 : (!asl.int, !asl.int) -> !asl.bool
+    %lt_int = asl.lt_int %int1, %int2 : (!asl.int, !asl.int) -> !asl.bool
+    %ge_int = asl.ge_int %int1, %int2 : (!asl.int, !asl.int) -> !asl.bool
+    %gt_int = asl.gt_int %int1, %int2 : (!asl.int, !asl.int) -> !asl.bool
 
 // CHECK-NEXT:    %eq_int = asl.eq_int %int1, %int2
 // CHECK-NEXT:    %ne_int = asl.ne_int %int1, %int2
