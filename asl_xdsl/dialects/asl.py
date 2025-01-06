@@ -901,6 +901,7 @@ class FuncOp(IRDLOperation):
             region,
             extra_attrs,
             _,
+            _,
         ) = parse_func_op_like(
             parser, reserved_attr_names=("sym_name", "function_type")
         )

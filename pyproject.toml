@@ -1,9 +1,7 @@
 [project]
 name = "asl-xdsl"
 version = "0.0.0"
-dependencies = [
-  "xdsl @ git+https://github.com/xdslproject/xdsl.git@sasha/asl-base",
-]
+dependencies = ["xdsl @ git+https://github.com/xdslproject/xdsl.git@main"]
 
 [project.optional-dependencies]
 dev = [
