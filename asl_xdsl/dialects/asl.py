@@ -30,6 +30,8 @@ from xdsl.irdl import (
     region_def,
     result_def,
     traits_def,
+    var_operand_def,
+    var_result_def,
 )
 from xdsl.parser import AttrParser, Parser
 from xdsl.printer import Printer
@@ -39,6 +41,8 @@ from xdsl.traits import (
     IsolatedFromAbove,
     IsTerminator,
     SymbolOpInterface,
+    SymbolTable,
+    SymbolUserOpInterface,
 )
 
 
@@ -947,6 +951,74 @@ class ReturnOp(IRDLOperation):
         super().__init__(operands=[value])
 
 
+class CallOpSymbolUserOpInterface(SymbolUserOpInterface):
+    def verify(self, op: Operation) -> None:
+        assert isinstance(op, CallOp)
+
+        found_callee = SymbolTable.lookup_symbol(op, op.callee)
+        if not found_callee:
+            raise VerifyException(f"'{op.callee}' could not be found in symbol table")
+
+        if not isinstance(found_callee, FuncOp):
+            raise VerifyException(f"'{op.callee}' does not reference a valid function")
+
+        if len(found_callee.function_type.inputs) != len(op.arguments):
+            raise VerifyException("incorrect number of operands for callee")
+
+        if len(found_callee.function_type.outputs) != len(op.result_types):
+            raise VerifyException("incorrect number of results for callee")
+
+        for idx, (found_operand, operand) in enumerate(
+            zip(found_callee.function_type.inputs, (arg.type for arg in op.arguments))
+        ):
+            if found_operand != operand:
+                raise VerifyException(
+                    f"operand type mismatch: expected operand type {found_operand}, but"
+                    f" provided {operand} for operand number {idx}"
+                )
+
+        for idx, (found_res, res) in enumerate(
+            zip(found_callee.function_type.outputs, op.result_types)
+        ):
+            if found_res != res:
+                raise VerifyException(
+                    f"result type mismatch: expected result type {found_res}, but"
+                    f" provided {res} for result number {idx}"
+                )
+
+        return
+
+
+@irdl_op_definition
+class CallOp(IRDLOperation):
+    name = "asl.call"
+    arguments = var_operand_def()
+    callee = prop_def(builtin.FlatSymbolRefAttrConstr)
+    res = var_result_def()
+
+    traits = traits_def(
+        CallOpSymbolUserOpInterface(),
+    )
+
+    assembly_format = (
+        "$callee `(` $arguments `)` attr-dict `:` functional-type($arguments, $res)"
+    )
+
+    def __init__(
+        self,
+        callee: str | builtin.SymbolRefAttr,
+        arguments: Sequence[SSAValue | Operation],
+        return_types: Sequence[Attribute],
+    ):
+        if isinstance(callee, str):
+            callee = builtin.SymbolRefAttr(callee)
+        super().__init__(
+            operands=[arguments],
+            result_types=[return_types],
+            properties={"callee": callee},
+        )
+
+
 @irdl_op_definition
 class SliceSingleOp(IRDLOperation):
     """Slice a single element from a bit vector."""
@@ -1019,6 +1091,7 @@ ASLDialect = Dialect(
         # Functions
         ReturnOp,
         FuncOp,
+        CallOp,
         # Slices
         SliceSingleOp,
     ],

@@ -20,12 +20,14 @@ builtin.module {
 // CHECK-NEXT:      asl.return
 // CHECK-NEXT:    }
 
-    asl.func @op_with_return(%x : !test.type<"type1">) -> (!test.type<"type1">) {
-        asl.return %x : !test.type<"type1">
+    asl.func @op_with_return(%x : !test.type<"type1">) -> (!test.type<"type2">) {
+        %y = asl.call @op_with_return(%x) : (!test.type<"type1">) -> !test.type<"type2">
+        asl.return %y : !test.type<"type2">
     }
 
-// CHECK-NEXT:    asl.func @op_with_return(%x : !test.type<"type1">) -> !test.type<"type1"> {
-// CHECK-NEXT:      asl.return %x : !test.type<"type1">
+// CHECK-NEXT:    asl.func @op_with_return(%x : !test.type<"type1">) -> !test.type<"type2"> {
+// CHECK-NEXT:      %y = asl.call @op_with_return(%x) : (!test.type<"type1">) -> !test.type<"type2">
+// CHECK-NEXT:      asl.return %y : !test.type<"type2">
 // CHECK-NEXT:    }
 
 }
