@@ -27,7 +27,7 @@ class ASLOptMain(xDSLOptMain):
 
             interpreter = Interpreter(module, file=output)
             interpreter.register_implementations(ASLFunctions())
-            op = interpreter.get_op_for_symbol("main")
+            op = interpreter.get_op_for_symbol("main.0")
             trait = op.get_trait(CallableOpInterface)
             assert trait is not None
 

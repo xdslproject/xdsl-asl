@@ -1,6 +1,6 @@
 // RUN: asl-opt --t exec %s | filecheck %s
 
-func main() => integer
+func main.0() => integer
 begin
     return 42;
 end;
