@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from xdsl.builder import Builder
 from xdsl.dialects.builtin import FunctionType, ModuleOp
 from xdsl.ir import Block, Region, SSAValue, TypeAttribute
+from xdsl.rewriter import InsertPoint
 from xdsl.utils.scoped_dict import ScopedDict
 
 from asl_xdsl.dialects.asl import (
@@ -46,7 +47,7 @@ class IRGen:
 
     def __init__(self):
         self.module = ModuleOp([])
-        self.builder = Builder.at_end(self.module.body.blocks[0])
+        self.builder = Builder(InsertPoint.at_end(self.module.body.blocks[0]))
 
     def ir_gen_module(self, module_ast: ast.AST) -> ModuleOp:
         """
@@ -119,7 +120,7 @@ class IRGen:
 
         # Create entry block and switch builder to it
         entry_block = Block()
-        self.builder = Builder.at_start(entry_block)
+        self.builder = Builder(InsertPoint.at_start(entry_block))
 
         # Create new scope for function
         outer_symbol_table = self.symbol_table
@@ -132,7 +133,7 @@ class IRGen:
         self.symbol_table = outer_symbol_table
 
         # Return builder to module level
-        self.builder = Builder.at_end(self.module.body.blocks[0])
+        self.builder = Builder(InsertPoint.at_end(self.module.body.blocks[0]))
 
         # Create function operation
         function_type = IRGen.get_function_type(decl.args, decl.return_type)
