@@ -323,7 +323,7 @@ class ConstantIntOp(IRDLOperation):
     @classmethod
     def parse(cls, parser: Parser) -> ConstantIntOp:
         """Parse the operation."""
-        value = parser.parse_integer(allow_boolean=False, allow_negative=False)
+        value = parser.parse_integer(allow_boolean=False, allow_negative=True)
         attr_dict = parser.parse_optional_attr_dict()
         return ConstantIntOp(value, attr_dict)
 
