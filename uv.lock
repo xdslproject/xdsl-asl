@@ -9,7 +9,7 @@ dependencies = [
     { name = "xdsl" },
 ]
 
-[package.dev-dependencies]
+[package.optional-dependencies]
 dev = [
     { name = "filecheck" },
     { name = "lit" },
@@ -19,18 +19,24 @@ dev = [
     { name = "pytest" },
 ]
 
+[package.dev-dependencies]
+dev = [
+    { name = "asl-xdsl", extra = ["dev"] },
+]
+
 [package.metadata]
-requires-dist = [{ name = "xdsl", git = "https://github.com/xdslproject/xdsl.git?rev=32ecd268ba9cfd26f27edb345614c8671ee29814#32ecd268ba9cfd26f27edb345614c8671ee29814" }]
+requires-dist = [
+    { name = "filecheck", marker = "extra == 'dev'", specifier = "==1.0.1" },
+    { name = "lit", marker = "extra == 'dev'", specifier = "<19.0.0" },
+    { name = "pre-commit", marker = "extra == 'dev'", specifier = "==4.0.1" },
+    { name = "psutil", marker = "extra == 'dev'", specifier = "==6.1.0" },
+    { name = "pyright", marker = "extra == 'dev'", specifier = "==1.1.390" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = "<8.4" },
+    { name = "xdsl", git = "https://github.com/xdslproject/xdsl.git?rev=32ecd268ba9cfd26f27edb345614c8671ee29814#32ecd268ba9cfd26f27edb345614c8671ee29814" },
+]
 
 [package.metadata.requires-dev]
-dev = [
-    { name = "filecheck", specifier = "==1.0.1" },
-    { name = "lit", specifier = "<19.0.0" },
-    { name = "pre-commit", specifier = "==4.0.1" },
-    { name = "psutil", specifier = "==6.1.0" },
-    { name = "pyright", specifier = "==1.1.390" },
-    { name = "pytest", specifier = "<8.4" },
-]
+dev = [{ name = "asl-xdsl", extras = ["dev"] }]
 
 [[package]]
 name = "cfgv"
