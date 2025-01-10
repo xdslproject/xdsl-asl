@@ -29,8 +29,8 @@ builtin.module {
     %sub_int = asl.sub_int %int1, %int2 : (!asl.int, !asl.int) -> !asl.int
     %mul_int = asl.mul_int %int1, %int2 : (!asl.int, !asl.int) -> !asl.int
     %exp_int = asl.exp_int %int1, %int2 : (!asl.int, !asl.int) -> !asl.int
-    %shiftleft_int = asl.shiftleft_int %int1, %int2 : (!asl.int, !asl.int) -> !asl.int
-    %shiftright_int = asl.shiftright_int %int1, %int2 : (!asl.int, !asl.int) -> !asl.int
+    %shiftleft_int = asl.shl_int %int1, %int2 : (!asl.int, !asl.int) -> !asl.int
+    %shiftright_int = asl.shr_int %int1, %int2 : (!asl.int, !asl.int) -> !asl.int
     %div_int = asl.div_int %int1, %int2 : (!asl.int, !asl.int) -> !asl.int
     %fdiv_int = asl.fdiv_int %int1, %int2 : (!asl.int, !asl.int) -> !asl.int
     %frem_int = asl.frem_int %int1, %int2 : (!asl.int, !asl.int) -> !asl.int
@@ -40,8 +40,8 @@ builtin.module {
 // CHECK-NEXT:    %sub_int = asl.sub_int %int1, %int2
 // CHECK-NEXT:    %mul_int = asl.mul_int %int1, %int2
 // CHECK-NEXT:    %exp_int = asl.exp_int %int1, %int2
-// CHECK-NEXT:    %shiftleft_int = asl.shiftleft_int %int1, %int2
-// CHECK-NEXT:    %shiftright_int = asl.shiftright_int %int1, %int2
+// CHECK-NEXT:    %shiftleft_int = asl.shl_int %int1, %int2
+// CHECK-NEXT:    %shiftright_int = asl.shr_int %int1, %int2
 // CHECK-NEXT:    %div_int = asl.div_int %int1, %int2
 // CHECK-NEXT:    %fdiv_int = asl.fdiv_int %int1, %int2
 // CHECK-NEXT:    %frem_int = asl.frem_int %int1, %int2
