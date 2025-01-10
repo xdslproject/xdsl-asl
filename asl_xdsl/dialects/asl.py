@@ -155,6 +155,13 @@ class BoolAttr(Data[bool]):
 
 
 @irdl_attr_definition
+class StringType(ParametrizedAttribute, TypeAttribute):
+    """A string type."""
+
+    name = "asl.string"
+
+
+@irdl_attr_definition
 class IntegerType(ParametrizedAttribute, TypeAttribute):
     """An arbitrary-precision integer type."""
 
@@ -378,6 +385,29 @@ class ConstantBitVectorOp(IRDLOperation):
 
 
 @irdl_op_definition
+class ConstantStringOp(IRDLOperation):
+    """A constant string operation."""
+
+    name = "asl.constant_string"
+
+    value = prop_def(builtin.StringAttr)
+    res = result_def(StringType)
+
+    assembly_format = "$value attr-dict"
+
+    def __init__(
+        self, value: str | builtin.StringAttr, attr_dict: Mapping[str, Attribute] = {}
+    ):
+        if isinstance(value, str):
+            value = builtin.StringAttr(value)
+        super().__init__(
+            result_types=[StringType()],
+            properties={"value": value},
+            attributes=attr_dict,
+        )
+
+
+@irdl_op_definition
 class NotOp(IRDLOperation):
     """A bitwise NOT operation."""
 
@@ -535,14 +565,14 @@ class ExpIntOp(BinaryIntOp):
 class ShiftLeftIntOp(BinaryIntOp):
     """An integer left shift operation."""
 
-    name = "asl.shiftleft_int"
+    name = "asl.shl_int"
 
 
 @irdl_op_definition
 class ShiftRightIntOp(BinaryIntOp):
     """An integer right shift operation."""
 
-    name = "asl.shiftright_int"
+    name = "asl.shr_int"
 
 
 @irdl_op_definition
@@ -1052,6 +1082,7 @@ ASLDialect = Dialect(
         ConstantBoolOp,
         ConstantIntOp,
         ConstantBitVectorOp,
+        ConstantStringOp,
         # Boolean operations
         NotOp,
         AndBoolOp,
@@ -1095,5 +1126,12 @@ ASLDialect = Dialect(
         # Slices
         SliceSingleOp,
     ],
-    [BoolType, BoolAttr, IntegerType, BitVectorType, BitVectorAttr],
+    [
+        BoolType,
+        BoolAttr,
+        IntegerType,
+        BitVectorType,
+        BitVectorAttr,
+        StringType,
+    ],
 )
