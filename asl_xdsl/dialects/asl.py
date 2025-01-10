@@ -464,7 +464,7 @@ class EquivBoolOp(BinaryBoolOp):
 class NegateIntOp(IRDLOperation):
     """An integer negation operation."""
 
-    name = "asl.negate_int"
+    name = "asl.neg_int"
 
     arg = operand_def(IntegerType)
     res = result_def(IntegerType)

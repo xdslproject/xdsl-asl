@@ -40,6 +40,14 @@ class ASLFunctions(InterpreterFunctions):
     ) -> tuple[Any, ...]:
         return interpreter.call_op(op.callee.string_value(), args)
 
+    @impl(asl.NegateIntOp)
+    def run_neg_int(
+        self, interpreter: Interpreter, op: asl.NegateIntOp, args: tuple[Any, ...]
+    ) -> tuple[Any, ...]:
+        arg: int
+        [arg] = args
+        return (0 - arg,)
+
     @impl(asl.AddIntOp)
     def run_add_int(
         self, interpreter: Interpreter, op: asl.AddIntOp, args: tuple[Any, ...]

@@ -24,7 +24,7 @@ builtin.module {
     %int1, %int2 = "test.op"() : () -> (!asl.int, !asl.int)
 // CHECK-NEXT:    %int1, %int2 = "test.op"() : () -> (!asl.int, !asl.int)
 
-    %negate_int = asl.negate_int %int1 : !asl.int -> !asl.int
+    %neg_int = asl.neg_int %int1 : !asl.int -> !asl.int
     %add_int = asl.add_int %int1, %int2 : (!asl.int, !asl.int) -> !asl.int
     %sub_int = asl.sub_int %int1, %int2 : (!asl.int, !asl.int) -> !asl.int
     %mul_int = asl.mul_int %int1, %int2 : (!asl.int, !asl.int) -> !asl.int
@@ -35,7 +35,7 @@ builtin.module {
     %fdiv_int = asl.fdiv_int %int1, %int2 : (!asl.int, !asl.int) -> !asl.int
     %frem_int = asl.frem_int %int1, %int2 : (!asl.int, !asl.int) -> !asl.int
 
-// CHECK-NEXT:    %negate_int = asl.negate_int %int1
+// CHECK-NEXT:    %neg_int = asl.neg_int %int1
 // CHECK-NEXT:    %add_int = asl.add_int %int1, %int2
 // CHECK-NEXT:    %sub_int = asl.sub_int %int1, %int2
 // CHECK-NEXT:    %mul_int = asl.mul_int %int1, %int2
