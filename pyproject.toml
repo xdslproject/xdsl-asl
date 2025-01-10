@@ -1,10 +1,13 @@
 [project]
 name = "asl-xdsl"
 version = "0.0.0"
-dependencies = ["xdsl @ git+https://github.com/xdslproject/xdsl.git@main"]
+dependencies = [
+  "xdsl @ git+https://github.com/xdslproject/xdsl.git@32ecd268ba9cfd26f27edb345614c8671ee29814",
+]
 requires-python = ">=3.10"
 
-[project.optional-dependencies]
+
+[dependency-groups]
 dev = [
   "pyright==1.1.390",
   "lit<19.0.0",
