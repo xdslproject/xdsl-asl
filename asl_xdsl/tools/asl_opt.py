@@ -6,6 +6,7 @@ from xdsl.traits import CallableOpInterface
 from xdsl.xdsl_opt_main import xDSLOptMain
 
 from asl_xdsl.dialects.asl import ASLDialect
+from asl_xdsl.dialects.asl_dep import ASLDepDialect
 from asl_xdsl.frontend.parser import ASLParser
 
 
@@ -13,6 +14,7 @@ class ASLOptMain(xDSLOptMain):
     def register_all_dialects(self):
         super().register_all_dialects()
         self.ctx.load_dialect(ASLDialect)
+        self.ctx.load_dialect(ASLDepDialect)
 
     def register_all_passes(self):
         return super().register_all_passes()
