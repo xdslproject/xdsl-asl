@@ -13,6 +13,7 @@ from xdsl.interpreter import (
     register_impls,
 )
 from xdsl.ir import Operation
+from xdsl.utils.comparisons import to_signed, to_unsigned
 
 from asl_xdsl.dialects import asl
 
@@ -244,12 +245,171 @@ class ASLFunctions(InterpreterFunctions):
         (lhs, rhs) = args
         return (lhs > rhs,)
 
+    @impl(asl.AddBitsOp)
+    def run_add_bits(
+        self, interpreter: Interpreter, op: asl.AddBitsOp, args: tuple[Any, ...]
+    ) -> tuple[Any, ...]:
+        assert isinstance(op.lhs.type, asl.BitVectorType)
+        width = op.lhs.type.width.data
+        lhs: int
+        rhs: int
+        (lhs, rhs) = args
+        result = to_unsigned(lhs + rhs, width)
+        return (result,)
+
+    @impl(asl.SubBitsOp)
+    def run_sub_bits(
+        self, interpreter: Interpreter, op: asl.SubBitsOp, args: tuple[Any, ...]
+    ) -> tuple[Any, ...]:
+        assert isinstance(op.lhs.type, asl.BitVectorType)
+        width = op.lhs.type.width.data
+        lhs: int
+        rhs: int
+        (lhs, rhs) = args
+        result = to_unsigned(lhs - rhs, width)
+        return (result,)
+
+    @impl(asl.MulBitsOp)
+    def run_mul_bits(
+        self, interpreter: Interpreter, op: asl.MulBitsOp, args: tuple[Any, ...]
+    ) -> tuple[Any, ...]:
+        assert isinstance(op.lhs.type, asl.BitVectorType)
+        width = op.lhs.type.width.data
+        lhs: int
+        rhs: int
+        (lhs, rhs) = args
+        result = to_unsigned(lhs * rhs, width)
+        return (result,)
+
+    @impl(asl.AndBitsOp)
+    def run_and_bits(
+        self, interpreter: Interpreter, op: asl.AndBitsOp, args: tuple[Any, ...]
+    ) -> tuple[Any, ...]:
+        lhs: int
+        rhs: int
+        (lhs, rhs) = args
+        return (lhs & rhs,)
+
+    @impl(asl.OrBitsOp)
+    def run_or_bits(
+        self, interpreter: Interpreter, op: asl.OrBitsOp, args: tuple[Any, ...]
+    ) -> tuple[Any, ...]:
+        lhs: int
+        rhs: int
+        (lhs, rhs) = args
+        return (lhs | rhs,)
+
+    @impl(asl.XorBitsOp)
+    def run_xor_bits(
+        self, interpreter: Interpreter, op: asl.XorBitsOp, args: tuple[Any, ...]
+    ) -> tuple[Any, ...]:
+        lhs: int
+        rhs: int
+        (lhs, rhs) = args
+        return (lhs ^ rhs,)
+
+    @impl(asl.LslBitsOp)
+    def run_lsl_bits(
+        self, interpreter: Interpreter, op: asl.LslBitsOp, args: tuple[Any, ...]
+    ) -> tuple[Any, ...]:
+        assert isinstance(op.lhs.type, asl.BitVectorType)
+        width = op.lhs.type.width.data
+        lhs: int
+        rhs: int
+        (lhs, rhs) = args
+        result = to_unsigned(lhs << rhs, width)
+        return (result,)
+
+    @impl(asl.LsrBitsOp)
+    def run_lsr_bits(
+        self, interpreter: Interpreter, op: asl.LsrBitsOp, args: tuple[Any, ...]
+    ) -> tuple[Any, ...]:
+        assert isinstance(op.lhs.type, asl.BitVectorType)
+        width = op.lhs.type.width.data
+        lhs: int
+        rhs: int
+        (lhs, rhs) = args
+        result = to_unsigned(lhs >> rhs, width)
+        return (result,)
+
+    @impl(asl.AsrBitsOp)
+    def run_asr_bits(
+        self, interpreter: Interpreter, op: asl.AsrBitsOp, args: tuple[Any, ...]
+    ) -> tuple[Any, ...]:
+        assert isinstance(op.lhs.type, asl.BitVectorType)
+        width = op.lhs.type.width.data
+        lhs: int
+        rhs: int
+        (lhs, rhs) = args
+        if lhs >= 2 ** (width - 1):
+            lhs = lhs - 2**width
+        result = to_unsigned(lhs >> rhs, width)
+        return (result,)
+
+    @impl(asl.NotBitsOp)
+    def run_not_bits(
+        self, interpreter: Interpreter, op: asl.NotBitsOp, args: tuple[Any, ...]
+    ) -> tuple[Any, ...]:
+        assert isinstance(op.arg.type, asl.BitVectorType)
+        width = op.arg.type.width.data
+        arg: int
+        [arg] = args
+        result = (1 << width) - 1 - arg
+        return (result,)
+
+    @impl(asl.CvtBitsUIntOp)
+    def run_cvt_bits_uint_bits(
+        self, interpreter: Interpreter, op: asl.CvtBitsUIntOp, args: tuple[Any, ...]
+    ) -> tuple[Any, ...]:
+        assert isinstance(op.arg.type, asl.BitVectorType)
+        width = op.arg.type.width.data
+        arg: int
+        [arg] = args
+        result = to_unsigned(arg, width)
+        return (result,)
+
+    @impl(asl.CvtBitsSIntOp)
+    def run_cvt_bits_sint_bits(
+        self, interpreter: Interpreter, op: asl.CvtBitsSIntOp, args: tuple[Any, ...]
+    ) -> tuple[Any, ...]:
+        assert isinstance(op.arg.type, asl.BitVectorType)
+        width = op.arg.type.width.data
+        arg: int
+        [arg] = args
+        result = to_signed(arg, width)
+        return (result,)
+
+    @impl(asl.EqBitsOp)
+    def run_eq_bits(
+        self, interpreter: Interpreter, op: asl.EqBitsOp, args: tuple[Any, ...]
+    ) -> tuple[Any, ...]:
+        lhs: int
+        rhs: int
+        (lhs, rhs) = args
+        return (lhs == rhs,)
+
+    @impl(asl.NeBitsOp)
+    def run_ne_bits(
+        self, interpreter: Interpreter, op: asl.NeBitsOp, args: tuple[Any, ...]
+    ) -> tuple[Any, ...]:
+        lhs: int
+        rhs: int
+        (lhs, rhs) = args
+        return (lhs != rhs,)
+
     @impl(asl.ConstantIntOp)
     def run_constant_int(
         self, interpreter: Interpreter, op: asl.ConstantIntOp, args: PythonValues
     ) -> PythonValues:
         value = op.value
         return (value.data,)
+
+    @impl(asl.ConstantBitVectorOp)
+    def run_constant_bits(
+        self, interpreter: Interpreter, op: asl.ConstantBitVectorOp, args: PythonValues
+    ) -> PythonValues:
+        value = op.value
+        return (value.value.data,)
 
     @impl(asl.ConstantStringOp)
     def run_constant_string(
@@ -258,16 +418,19 @@ class ASLFunctions(InterpreterFunctions):
         value = op.value
         return (value.data,)
 
-    # region built-in function implementations
-
-    @impl_external("print_bits_hex.0")
+    @impl(asl.PrintBitsHexOp)
     def asl_print_bits_hex(
-        self, interpreter: Interpreter, op: Operation, args: PythonValues
+        self, interpreter: Interpreter, op: asl.PrintBitsHexOp, args: PythonValues
     ) -> PythonValues:
+        assert isinstance(op.arg.type, asl.BitVectorType)
+        width = op.arg.type.width.data
         arg: int
         (arg,) = args
-        interpreter.print(hex(arg))
+        output = f"{width:d}'x{arg:x}"
+        interpreter.print(output)
         return ()
+
+    # region built-in function implementations
 
     @impl_external("print_int_dec.0")
     def asl_print_int_dec(

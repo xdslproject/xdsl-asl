@@ -54,14 +54,33 @@ builtin.module {
 
     %bits1, %bits2 = "test.op"() : () -> (!asl.bits<32>, !asl.bits<32>)
 
-    %add_bits = asl.add_bits %bits1, %bits2 : !asl.bits<32>
-    %add_bits_int = asl.add_bits_int %bits1, %int1 : !asl.bits<32>
-    %sub_bits = asl.sub_bits %bits1, %bits2 : !asl.bits<32>
-    %sub_bits_int = asl.sub_bits_int %bits1, %int1 : !asl.bits<32>
-    %not_bits = asl.not_bits %bits1 : !asl.bits<32>
-    %and_bits = asl.and_bits %bits1, %bits2 : !asl.bits<32>
-    %or_bits = asl.or_bits %bits1, %bits2 : !asl.bits<32>
-    %xor_bits = asl.xor_bits %bits1, %bits2 : !asl.bits<32>
-    %eq_bits = asl.eq_bits %bits1, %bits2 : !asl.bits<32>
-    %ne_bits = asl.ne_bits %bits1, %bits2 : !asl.bits<32>
+    %add_bits = asl.add_bits %bits1, %bits2 : (!asl.bits<32>, !asl.bits<32>) -> !asl.bits<32>
+    %add_bits_int = asl.add_bits_int %bits1, %int1 : (!asl.bits<32>, !asl.int) -> !asl.bits<32>
+    %sub_bits = asl.sub_bits %bits1, %bits2 : (!asl.bits<32>, !asl.bits<32>) -> !asl.bits<32>
+    %sub_bits_int = asl.sub_bits_int %bits1, %int1 : (!asl.bits<32>, !asl.int) -> !asl.bits<32>
+    %mul_bits = asl.mul_bits %bits1, %bits2 : (!asl.bits<32>, !asl.bits<32>) -> !asl.bits<32>
+    %not_bits = asl.not_bits %bits1 : !asl.bits<32> -> !asl.bits<32>
+    %sint_bits = asl.cvt_bits_sint %bits1 : !asl.bits<32> -> !asl.int
+    %uint_bits = asl.cvt_bits_uint %bits1 : !asl.bits<32> -> !asl.int
+    %and_bits = asl.and_bits %bits1, %bits2 : (!asl.bits<32>, !asl.bits<32>) -> !asl.bits<32>
+    %or_bits = asl.or_bits %bits1, %bits2 : (!asl.bits<32>, !asl.bits<32>) -> !asl.bits<32>
+    %xor_bits = asl.xor_bits %bits1, %bits2 : (!asl.bits<32>, !asl.bits<32>) -> !asl.bits<32>
+    %eq_bits = asl.eq_bits %bits1, %bits2 : (!asl.bits<32>, !asl.bits<32>) -> i1
+    %ne_bits = asl.ne_bits %bits1, %bits2 : (!asl.bits<32>, !asl.bits<32>) -> i1
+    asl.print_bits_hex %bits1 : !asl.bits<32> -> ()
+
+// CHECK:         %add_bits = asl.add_bits %bits1, %bits2 : (!asl.bits<32>, !asl.bits<32>) -> !asl.bits<32>
+// CHECK-NEXT:    %add_bits_int = asl.add_bits_int %bits1, %int1 : (!asl.bits<32>, !asl.int) -> !asl.bits<32>
+// CHECK-NEXT:    %sub_bits = asl.sub_bits %bits1, %bits2 : (!asl.bits<32>, !asl.bits<32>) -> !asl.bits<32>
+// CHECK-NEXT:    %sub_bits_int = asl.sub_bits_int %bits1, %int1 : (!asl.bits<32>, !asl.int) -> !asl.bits<32>
+// CHECK-NEXT:    %mul_bits = asl.mul_bits %bits1, %bits2 : (!asl.bits<32>, !asl.bits<32>) -> !asl.bits<32>
+// CHECK-NEXT:    %not_bits = asl.not_bits %bits1 : !asl.bits<32> -> !asl.bits<32>
+// CHECK-NEXT:    %sint_bits = asl.cvt_bits_sint %bits1 : !asl.bits<32> -> !asl.int
+// CHECK-NEXT:    %uint_bits = asl.cvt_bits_uint %bits1 : !asl.bits<32> -> !asl.int
+// CHECK-NEXT:    %and_bits = asl.and_bits %bits1, %bits2 : (!asl.bits<32>, !asl.bits<32>) -> !asl.bits<32>
+// CHECK-NEXT:    %or_bits = asl.or_bits %bits1, %bits2 : (!asl.bits<32>, !asl.bits<32>) -> !asl.bits<32>
+// CHECK-NEXT:    %xor_bits = asl.xor_bits %bits1, %bits2 : (!asl.bits<32>, !asl.bits<32>) -> !asl.bits<32>
+// CHECK-NEXT:    %eq_bits = asl.eq_bits %bits1, %bits2 : (!asl.bits<32>, !asl.bits<32>) -> i1
+// CHECK-NEXT:    %ne_bits = asl.ne_bits %bits1, %bits2 : (!asl.bits<32>, !asl.bits<32>) -> i1
+// CHECK-NEXT:    asl.print_bits_hex %bits1 : !asl.bits<32> -> ()
 }
