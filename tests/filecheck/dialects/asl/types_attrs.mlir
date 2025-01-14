@@ -5,7 +5,7 @@ builtin.module {
     "test.op"() {bool_true = #asl.bool_attr<true>, bool_false = #asl.bool_attr<false>} : () -> ()
 
 // CHECK:         "test.op"() {bool_type = !asl.bool} : () -> ()
-// CHECK-NEXT:    "test.op"() {bool_true = #asl.bool_attrtrue, bool_false = #asl.bool_attrfalse} : () -> ()
+// CHECK-NEXT:    "test.op"() {bool_true = #asl.bool_attr<true>, bool_false = #asl.bool_attr<false>} : () -> ()
 
     "test.op"() {int_type = !asl.int} : () -> ()
     "test.op"() {constraint_int = !asl.int<42>} : () -> ()

@@ -151,7 +151,7 @@ class BoolAttr(Data[bool]):
 
     def print_parameter(self, printer: Printer) -> None:
         """Print the attribute parameter."""
-        printer.print("true" if self.data else "false")
+        printer.print("<true>" if self.data else "<false>")
 
 
 @irdl_attr_definition
