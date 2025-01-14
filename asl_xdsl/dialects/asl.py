@@ -426,6 +426,25 @@ class NotOp(IRDLOperation):
         )
 
 
+@irdl_op_definition
+class BoolToI1Op(IRDLOperation):
+    """A hack to convert !asl.bool to i1 so that we can use scf.if."""
+
+    name = "asl.bool_to_i1"
+
+    arg = operand_def(BoolType())
+    res = result_def(builtin.IntegerType(1))
+
+    assembly_format = "$arg `:` type($arg) `->` type($res) attr-dict"
+
+    def __init__(self, arg: SSAValue, attr_dict: Mapping[str, Attribute] = {}):
+        super().__init__(
+            operands=[arg],
+            result_types=[builtin.IntegerType(1)],
+            attributes=attr_dict,
+        )
+
+
 class BinaryBoolOp(IRDLOperation):
     """A binary boolean operation."""
 
@@ -1084,6 +1103,7 @@ ASLDialect = Dialect(
         ConstantBitVectorOp,
         ConstantStringOp,
         # Boolean operations
+        BoolToI1Op,
         NotOp,
         AndBoolOp,
         OrBoolOp,
