@@ -8,7 +8,6 @@ from xdsl.dialects.utils import parse_func_op_like, print_func_op_like
 from xdsl.ir import (
     Attribute,
     Block,
-    Data,
     Dialect,
     Operation,
     ParametrizedAttribute,
@@ -126,32 +125,6 @@ def _print_integer_constraint(
         printer.print(constraint.value)
     else:
         printer.print(constraint.min_value, ":", constraint.max_value)
-
-
-@irdl_attr_definition
-class BoolType(ParametrizedAttribute, TypeAttribute):
-    """A boolean type."""
-
-    name = "asl.bool"
-
-
-@irdl_attr_definition
-class BoolAttr(Data[bool]):
-    """A boolean attribute."""
-
-    name = "asl.bool_attr"
-
-    @classmethod
-    def parse_parameter(cls, parser: AttrParser) -> bool:
-        """Parse the attribute parameter."""
-        parser.parse_characters("<")
-        value = parser.parse_boolean()
-        parser.parse_characters(">")
-        return value
-
-    def print_parameter(self, printer: Printer) -> None:
-        """Print the attribute parameter."""
-        printer.print("<true>" if self.data else "<false>")
 
 
 @irdl_attr_definition
@@ -277,37 +250,6 @@ class BitVectorAttr(ParametrizedAttribute):
 
 
 @irdl_op_definition
-class ConstantBoolOp(IRDLOperation):
-    """A constant boolean operation."""
-
-    name = "asl.constant_bool"
-
-    value = prop_def(BoolAttr)
-    res = result_def(BoolType())
-
-    def __init__(self, value: bool, attr_dict: Mapping[str, Attribute] = {}):
-        super().__init__(
-            result_types=[BoolType()],
-            properties={"value": BoolAttr(value)},
-            attributes=attr_dict,
-        )
-
-    @classmethod
-    def parse(cls, parser: Parser) -> ConstantBoolOp:
-        """Parse the operation."""
-        value = parser.parse_boolean()
-        attr_dict = parser.parse_optional_attr_dict()
-        return ConstantBoolOp(value, attr_dict)
-
-    def print(self, printer: Printer) -> None:
-        """Print the operation."""
-        printer.print(" ", "true" if self.value else "false")
-        if self.attributes:
-            printer.print(" ")
-            printer.print_attr_dict(self.attributes)
-
-
-@irdl_op_definition
 class ConstantIntOp(IRDLOperation):
     """A constant arbitrary-sized integer operation."""
 
@@ -405,108 +347,6 @@ class ConstantStringOp(IRDLOperation):
             properties={"value": value},
             attributes=attr_dict,
         )
-
-
-@irdl_op_definition
-class NotOp(IRDLOperation):
-    """A bitwise NOT operation."""
-
-    name = "asl.not_bool"
-
-    arg = operand_def(BoolType())
-    res = result_def(BoolType())
-
-    assembly_format = "$arg attr-dict"
-
-    def __init__(self, arg: SSAValue, attr_dict: Mapping[str, Attribute] = {}):
-        super().__init__(
-            operands=[arg],
-            result_types=[BoolType()],
-            attributes=attr_dict,
-        )
-
-
-@irdl_op_definition
-class BoolToI1Op(IRDLOperation):
-    """A hack to convert !asl.bool to i1 so that we can use scf.if."""
-
-    name = "asl.bool_to_i1"
-
-    arg = operand_def(BoolType())
-    res = result_def(builtin.IntegerType(1))
-
-    assembly_format = "$arg `:` type($arg) `->` type($res) attr-dict"
-
-    def __init__(self, arg: SSAValue, attr_dict: Mapping[str, Attribute] = {}):
-        super().__init__(
-            operands=[arg],
-            result_types=[builtin.IntegerType(1)],
-            attributes=attr_dict,
-        )
-
-
-class BinaryBoolOp(IRDLOperation):
-    """A binary boolean operation."""
-
-    lhs = operand_def(BoolType())
-    rhs = operand_def(BoolType())
-    res = result_def(BoolType())
-
-    assembly_format = "$lhs `,` $rhs attr-dict"
-
-    def __init__(
-        self,
-        lhs: SSAValue,
-        rhs: SSAValue,
-        attr_dict: Mapping[str, Attribute] = {},
-    ):
-        super().__init__(
-            operands=[lhs, rhs],
-            result_types=[BoolType()],
-            attributes=attr_dict,
-        )
-
-
-@irdl_op_definition
-class AndBoolOp(BinaryBoolOp):
-    """A boolean AND operation."""
-
-    name = "asl.and_bool"
-
-
-@irdl_op_definition
-class OrBoolOp(BinaryBoolOp):
-    """A boolean OR operation."""
-
-    name = "asl.or_bool"
-
-
-@irdl_op_definition
-class EqBoolOp(BinaryBoolOp):
-    """A boolean EQ operation."""
-
-    name = "asl.eq_bool"
-
-
-@irdl_op_definition
-class NeBoolOp(BinaryBoolOp):
-    """A boolean NE operation."""
-
-    name = "asl.ne_bool"
-
-
-@irdl_op_definition
-class ImpliesBoolOp(BinaryBoolOp):
-    """A boolean IMPLIES operation."""
-
-    name = "asl.implies_bool"
-
-
-@irdl_op_definition
-class EquivBoolOp(BinaryBoolOp):
-    """A boolean EQUIV operation."""
-
-    name = "asl.equiv_bool"
 
 
 class UnaryIntOp(IRDLOperation):
@@ -689,7 +529,7 @@ class IsPow2IntOp(IRDLOperation):
     """An integer power-of-two predicate operation."""
 
     arg = operand_def(IntegerType)
-    res = result_def(BoolType())
+    res = result_def(builtin.IntegerType(1))
 
     name = "asl.is_pow2_int"
 
@@ -702,7 +542,7 @@ class IsPow2IntOp(IRDLOperation):
     ):
         super().__init__(
             operands=[arg],
-            result_types=[BoolType()],
+            result_types=[builtin.IntegerType(1)],
             attributes=attr_dict,
         )
 
@@ -712,7 +552,7 @@ class PredicateIntOp(IRDLOperation):
 
     lhs = operand_def(IntegerType)
     rhs = operand_def(IntegerType)
-    res = result_def(BoolType())
+    res = result_def(builtin.IntegerType(1))
 
     assembly_format = (
         "$lhs `,` $rhs `:` `(` type($lhs) `,` type($rhs) `)` `->` type($res) attr-dict"
@@ -726,7 +566,7 @@ class PredicateIntOp(IRDLOperation):
     ):
         super().__init__(
             operands=[lhs, rhs],
-            result_types=[BoolType()],
+            result_types=[builtin.IntegerType(1)],
             attributes=attr_dict,
         )
 
@@ -917,7 +757,7 @@ class EqBitsOp(IRDLOperation):
 
     lhs = operand_def(T)
     rhs = operand_def(T)
-    res = result_def(BoolType())
+    res = result_def(builtin.IntegerType(1))
 
     assembly_format = "$lhs `,` $rhs `:` type($lhs) attr-dict"
 
@@ -929,7 +769,7 @@ class EqBitsOp(IRDLOperation):
     ):
         super().__init__(
             operands=[lhs, rhs],
-            result_types=[BoolType()],
+            result_types=[builtin.IntegerType(1)],
             attributes=attr_dict,
         )
 
@@ -944,7 +784,7 @@ class NeBitsOp(IRDLOperation):
 
     lhs = operand_def(T)
     rhs = operand_def(T)
-    res = result_def(BoolType())
+    res = result_def(builtin.IntegerType(1))
 
     assembly_format = "$lhs `,` $rhs `:` type($lhs) attr-dict"
 
@@ -956,7 +796,7 @@ class NeBitsOp(IRDLOperation):
     ):
         super().__init__(
             operands=[lhs, rhs],
-            result_types=[BoolType()],
+            result_types=[builtin.IntegerType(1)],
             attributes=attr_dict,
         )
 
@@ -1181,19 +1021,9 @@ ASLDialect = Dialect(
     "asl",
     [
         # Constants
-        ConstantBoolOp,
         ConstantIntOp,
         ConstantBitVectorOp,
         ConstantStringOp,
-        # Boolean operations
-        BoolToI1Op,
-        NotOp,
-        AndBoolOp,
-        OrBoolOp,
-        EqBoolOp,
-        NeBoolOp,
-        ImpliesBoolOp,
-        EquivBoolOp,
         # Integer operations
         NegateIntOp,
         AddIntOp,
@@ -1236,8 +1066,6 @@ ASLDialect = Dialect(
         SliceSingleOp,
     ],
     [
-        BoolType,
-        BoolAttr,
         IntegerType,
         BitVectorType,
         BitVectorAttr,

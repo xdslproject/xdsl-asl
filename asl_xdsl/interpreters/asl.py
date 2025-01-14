@@ -258,14 +258,6 @@ class ASLFunctions(InterpreterFunctions):
         value = op.value
         return (value.data,)
 
-    @impl(asl.BoolToI1Op)
-    def run_bool_to_i1(
-        self, interpreter: Interpreter, op: asl.BoolToI1Op, args: PythonValues
-    ) -> PythonValues:
-        arg: int
-        [arg] = args
-        return (arg,)
-
     # region built-in function implementations
 
     @impl_external("print_bits_hex.0")

@@ -1,19 +1,13 @@
 // RUN: asl-opt %s | asl-opt %s | filecheck %s
 
 builtin.module {
-    "test.op"() {bool_type = !asl.bool} : () -> ()
-    "test.op"() {bool_true = #asl.bool_attr<true>, bool_false = #asl.bool_attr<false>} : () -> ()
-
-// CHECK:         "test.op"() {bool_type = !asl.bool} : () -> ()
-// CHECK-NEXT:    "test.op"() {bool_true = #asl.bool_attr<true>, bool_false = #asl.bool_attr<false>} : () -> ()
-
     "test.op"() {int_type = !asl.int} : () -> ()
     "test.op"() {constraint_int = !asl.int<42>} : () -> ()
     "test.op"() {constraint_int = !asl.int<10:24>} : () -> ()
     "test.op"() {constraint_int = !asl.int<8, 16, 32, 64>} : () -> ()
     "test.op"() {constraint_int = !asl.int<0:32, 64>} : () -> ()
 
-// CHECK-NEXT:    "test.op"() {int_type = !asl.int} : () -> ()
+// CHECK:         "test.op"() {int_type = !asl.int} : () -> ()
 // CHECK-NEXT:    "test.op"() {constraint_int = !asl.int<42>} : () -> ()
 // CHECK-NEXT:    "test.op"() {constraint_int = !asl.int<10:24>} : () -> ()
 // CHECK-NEXT:    "test.op"() {constraint_int = !asl.int<8, 16, 32, 64>} : () -> ()
