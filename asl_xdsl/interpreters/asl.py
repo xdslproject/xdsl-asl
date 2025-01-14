@@ -75,6 +75,101 @@ class ASLFunctions(InterpreterFunctions):
         (lhs, rhs) = args
         return (lhs * rhs,)
 
+    @impl(asl.ExactDivIntOp)
+    def run_exact_div_int(
+        self, interpreter: Interpreter, op: asl.ExactDivIntOp, args: tuple[Any, ...]
+    ) -> tuple[Any, ...]:
+        lhs: int
+        rhs: int
+        (lhs, rhs) = args
+        assert rhs != 0
+        assert lhs % rhs == 0
+        return (lhs // rhs,)
+
+    @impl(asl.FloorDivIntOp)
+    def run_floor_div_int(
+        self, interpreter: Interpreter, op: asl.FloorDivIntOp, args: tuple[Any, ...]
+    ) -> tuple[Any, ...]:
+        lhs: int
+        rhs: int
+        (lhs, rhs) = args
+        assert rhs != 0
+        return (lhs // rhs,)
+
+    @impl(asl.FloorRemIntOp)
+    def run_floor_rem_int(
+        self, interpreter: Interpreter, op: asl.FloorRemIntOp, args: tuple[Any, ...]
+    ) -> tuple[Any, ...]:
+        lhs: int
+        rhs: int
+        (lhs, rhs) = args
+        assert rhs != 0
+        return (lhs % rhs,)
+
+    @impl(asl.ZeroDivIntOp)
+    def run_zero_div_int(
+        self, interpreter: Interpreter, op: asl.ZeroDivIntOp, args: tuple[Any, ...]
+    ) -> tuple[Any, ...]:
+        lhs: int
+        rhs: int
+        (lhs, rhs) = args
+        assert rhs != 0
+        div = abs(lhs) // abs(rhs)
+        if (lhs > 0) != (rhs > 0):
+            div = -div
+        return (div,)
+
+    @impl(asl.ZeroRemIntOp)
+    def run_zero_rem_int(
+        self, interpreter: Interpreter, op: asl.ZeroRemIntOp, args: tuple[Any, ...]
+    ) -> tuple[Any, ...]:
+        lhs: int
+        rhs: int
+        (lhs, rhs) = args
+        assert rhs != 0
+        div = abs(lhs) // abs(rhs)
+        if (lhs > 0) != (rhs > 0):
+            div = -div
+        return (lhs - div * rhs,)
+
+    @impl(asl.AlignIntOp)
+    def run_align_int(
+        self, interpreter: Interpreter, op: asl.AlignIntOp, args: tuple[Any, ...]
+    ) -> tuple[Any, ...]:
+        lhs: int
+        rhs: int
+        (lhs, rhs) = args
+        assert lhs >= 0
+        assert rhs >= 0
+        return ((lhs >> rhs) << rhs,)
+
+    @impl(asl.ModPow2IntOp)
+    def run_mod_pow2_int(
+        self, interpreter: Interpreter, op: asl.ModPow2IntOp, args: tuple[Any, ...]
+    ) -> tuple[Any, ...]:
+        lhs: int
+        rhs: int
+        (lhs, rhs) = args
+        assert lhs >= 0
+        assert rhs >= 0
+        return (lhs & ((1 << rhs) - 1),)
+
+    @impl(asl.IsPow2IntOp)
+    def run_is_pow2_int(
+        self, interpreter: Interpreter, op: asl.IsPow2IntOp, args: tuple[Any, ...]
+    ) -> tuple[Any, ...]:
+        arg: int
+        [arg] = args
+        return (arg > 0 and arg & (arg - 1) == 0,)
+
+    @impl(asl.Pow2IntOp)
+    def run_pow2_int(
+        self, interpreter: Interpreter, op: asl.Pow2IntOp, args: tuple[Any, ...]
+    ) -> tuple[Any, ...]:
+        arg: int
+        [arg] = args
+        return (1 << arg,)
+
     @impl(asl.ShiftLeftIntOp)
     def run_shl_int(
         self, interpreter: Interpreter, op: asl.ShiftLeftIntOp, args: tuple[Any, ...]

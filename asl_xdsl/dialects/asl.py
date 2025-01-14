@@ -509,23 +509,41 @@ class EquivBoolOp(BinaryBoolOp):
     name = "asl.equiv_bool"
 
 
-@irdl_op_definition
-class NegateIntOp(IRDLOperation):
-    """An integer negation operation."""
-
-    name = "asl.neg_int"
+class UnaryIntOp(IRDLOperation):
+    """A unary integer operation."""
 
     arg = operand_def(IntegerType)
     res = result_def(IntegerType)
 
     assembly_format = "$arg `:` type($arg) `->` type($res) attr-dict"
 
-    def __init__(self, arg: SSAValue, attr_dict: Mapping[str, Attribute] = {}):
+    def __init__(
+        self,
+        arg: SSAValue,
+        attr_dict: Mapping[str, Attribute] = {},
+    ):
         super().__init__(
             operands=[arg],
             result_types=[IntegerType()],
             attributes=attr_dict,
         )
+
+
+@irdl_op_definition
+class NegateIntOp(UnaryIntOp):
+    """An integer negation operation."""
+
+    name = "asl.neg_int"
+
+
+@irdl_op_definition
+class Pow2IntOp(UnaryIntOp):
+    """
+    An integer exponentiation operation.
+    result == 2 ** x
+    """
+
+    name = "asl.pow2_int"
 
 
 class BinaryIntOp(IRDLOperation):
@@ -595,33 +613,98 @@ class ShiftRightIntOp(BinaryIntOp):
 
 
 @irdl_op_definition
-class DivIntOp(BinaryIntOp):
+class ExactDivIntOp(BinaryIntOp):
     """
     An integer division operation.
     The rhs is expected to be positive, and to divide the lhs exactly.
     """
 
-    name = "asl.div_int"
+    name = "asl.exact_div_int"
 
 
 @irdl_op_definition
-class FDivIntOp(BinaryIntOp):
+class FloorDivIntOp(BinaryIntOp):
     """
-    An integer division remainder operation.
-    The rhs is expected to be positive, and the result is rounded down.
+    An integer division operation.
+    Calculates "floor(x / y)"
+    That is, the result is rounded down to negative infinity.
     """
 
     name = "asl.fdiv_int"
 
 
 @irdl_op_definition
-class FRemIntOp(BinaryIntOp):
+class FloorRemIntOp(BinaryIntOp):
     """
     An integer division remainder operation.
-    The rhs is expected to be positive, and the result is positive as well.
+    Pairs with asl.fdiv_int: "result == x - y * asl.fdiv_int(x, y)"
     """
 
     name = "asl.frem_int"
+
+
+@irdl_op_definition
+class ZeroDivIntOp(BinaryIntOp):
+    """
+    An integer division operation.
+    Calculates "round_to_zero(x / y)"
+    """
+
+    name = "asl.zdiv_int"
+
+
+@irdl_op_definition
+class ZeroRemIntOp(BinaryIntOp):
+    """
+    An integer division remainder operation.
+    Pairs with asl.zdiv_int: "result == x - y * asl.zdiv_int(x, y)"
+    """
+
+    name = "asl.zrem_int"
+
+
+@irdl_op_definition
+class AlignIntOp(BinaryIntOp):
+    """
+    An integer alignment operation.
+    Rounds x down to a multiple of 2**y.
+    result == asl.fdiv_int(x, 2**y)
+    """
+
+    name = "asl.align_int"
+
+
+@irdl_op_definition
+class ModPow2IntOp(BinaryIntOp):
+    """
+    An integer division remainder operation.
+    Pairs with asl.align_int: "result == asl.frem_int(x, 2**y)"
+    """
+
+    name = "asl.mod_pow2_int"
+
+
+@irdl_op_definition
+class IsPow2IntOp(IRDLOperation):
+    """An integer power-of-two predicate operation."""
+
+    arg = operand_def(IntegerType)
+    res = result_def(BoolType())
+
+    name = "asl.is_pow2_int"
+
+    assembly_format = "$arg `:` type($arg) `->` type($res) attr-dict"
+
+    def __init__(
+        self,
+        arg: SSAValue,
+        attr_dict: Mapping[str, Attribute] = {},
+    ):
+        super().__init__(
+            operands=[arg],
+            result_types=[BoolType()],
+            attributes=attr_dict,
+        )
 
 
 class PredicateIntOp(IRDLOperation):
@@ -1119,9 +1202,15 @@ ASLDialect = Dialect(
         ExpIntOp,
         ShiftLeftIntOp,
         ShiftRightIntOp,
-        DivIntOp,
-        FDivIntOp,
-        FRemIntOp,
+        ExactDivIntOp,
+        FloorDivIntOp,
+        FloorRemIntOp,
+        ZeroDivIntOp,
+        ZeroRemIntOp,
+        AlignIntOp,
+        ModPow2IntOp,
+        IsPow2IntOp,
+        Pow2IntOp,
         EqIntOp,
         NeIntOp,
         LeIntOp,
