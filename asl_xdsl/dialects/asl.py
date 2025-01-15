@@ -225,7 +225,7 @@ class BitVectorAttr(ParametrizedAttribute):
         super().__init__([builtin.IntAttr(value), type])
 
     def _verify(self) -> None:
-        if self.value.data < 0 or self.value.data >= self.maximum_value():
+        if self.value.data < 0 or self.value.data > self.maximum_value():
             raise VerifyException(
                 f"Value {self.value.data} is out of range "
                 f"for width {self.type.width.data}"
@@ -623,7 +623,9 @@ class BinaryBitsOp(IRDLOperation, ABC):
     rhs = operand_def(T)
     res = result_def(T)
 
-    assembly_format = "$lhs `,` $rhs `:` type($res) attr-dict"
+    assembly_format = (
+        "$lhs `,` $rhs `:` `(` type($lhs) `,` type($rhs) `)` `->` type($res) attr-dict"
+    )
 
     def __init__(
         self,
@@ -650,6 +652,13 @@ class SubBitsOp(BinaryBitsOp):
     """A bit vector subtraction operation."""
 
     name = "asl.sub_bits"
+
+
+@irdl_op_definition
+class MulBitsOp(BinaryBitsOp):
+    """A bit vector multiplication operation."""
+
+    name = "asl.mul_bits"
 
 
 @irdl_op_definition
@@ -685,7 +694,9 @@ class AddBitsIntOp(IRDLOperation):
     rhs = operand_def(IntegerType())
     res = result_def(T)
 
-    assembly_format = "$lhs `,` $rhs `:` type($res) attr-dict"
+    assembly_format = (
+        "$lhs `,` $rhs `:` `(` type($lhs) `,` type($rhs) `)` `->` type($res) attr-dict"
+    )
 
     def __init__(
         self,
@@ -712,7 +723,96 @@ class SubBitsIntOp(IRDLOperation):
     rhs = operand_def(IntegerType())
     res = result_def(T)
 
-    assembly_format = "$lhs `,` $rhs `:` type($res) attr-dict"
+    assembly_format = (
+        "$lhs `,` $rhs `:` `(` type($lhs) `,` type($rhs) `)` `->` type($res) attr-dict"
+    )
+
+    def __init__(
+        self,
+        lhs: SSAValue,
+        rhs: SSAValue,
+        attr_dict: Mapping[str, Attribute] = {},
+    ):
+        super().__init__(
+            operands=[lhs, rhs],
+            result_types=[lhs.type],
+            attributes=attr_dict,
+        )
+
+
+@irdl_op_definition
+class LslBitsOp(IRDLOperation):
+    """A bit vector logical left shift operation."""
+
+    name = "asl.lsl_bits"
+
+    T: ClassVar = VarConstraint("T", BaseAttr(BitVectorType))
+
+    lhs = operand_def(T)
+    rhs = operand_def(IntegerType())
+    res = result_def(T)
+
+    assembly_format = (
+        "$lhs `,` $rhs `:` `(` type($lhs) `,` type($rhs) `)` `->` type($res) attr-dict"
+    )
+
+    def __init__(
+        self,
+        lhs: SSAValue,
+        rhs: SSAValue,
+        attr_dict: Mapping[str, Attribute] = {},
+    ):
+        super().__init__(
+            operands=[lhs, rhs],
+            result_types=[lhs.type],
+            attributes=attr_dict,
+        )
+
+
+@irdl_op_definition
+class LsrBitsOp(IRDLOperation):
+    """A bit vector logical shift right operation."""
+
+    name = "asl.lsr_bits"
+
+    T: ClassVar = VarConstraint("T", BaseAttr(BitVectorType))
+
+    lhs = operand_def(T)
+    rhs = operand_def(IntegerType())
+    res = result_def(T)
+
+    assembly_format = (
+        "$lhs `,` $rhs `:` `(` type($lhs) `,` type($rhs) `)` `->` type($res) attr-dict"
+    )
+
+    def __init__(
+        self,
+        lhs: SSAValue,
+        rhs: SSAValue,
+        attr_dict: Mapping[str, Attribute] = {},
+    ):
+        super().__init__(
+            operands=[lhs, rhs],
+            result_types=[lhs.type],
+            attributes=attr_dict,
+        )
+
+
+@irdl_op_definition
+class AsrBitsOp(IRDLOperation):
+    """A bit vector arithmetic shift right operation."""
+
+    name = "asl.asr_bits"
+
+    T: ClassVar = VarConstraint("T", BaseAttr(BitVectorType))
+
+    lhs = operand_def(T)
+    rhs = operand_def(IntegerType())
+    res = result_def(T)
+
+    assembly_format = (
+        "$lhs `,` $rhs `:` `(` type($lhs) `,` type($rhs) `)` `->` type($res) attr-dict"
+    )
 
     def __init__(
         self,
@@ -738,12 +838,54 @@ class NotBitsOp(IRDLOperation):
     arg = operand_def(T)
     res = result_def(T)
 
-    assembly_format = "$arg `:` type($res) attr-dict"
+    assembly_format = "$arg `:` type($arg) `->` type($res) attr-dict"
 
     def __init__(self, arg: SSAValue, attr_dict: Mapping[str, Attribute] = {}):
         super().__init__(
             operands=[arg],
             result_types=[arg.type],
+            attributes=attr_dict,
+        )
+
+
+@irdl_op_definition
+class CvtBitsSIntOp(IRDLOperation):
+    """A conversion operation from bitvectors to signed integers."""
+
+    name = "asl.cvt_bits_sint"
+
+    T: ClassVar = VarConstraint("T", BaseAttr(BitVectorType))
+
+    arg = operand_def(T)
+    res = result_def(IntegerType)
+
+    assembly_format = "$arg `:` type($arg) `->` type($res) attr-dict"
+
+    def __init__(self, arg: SSAValue, attr_dict: Mapping[str, Attribute] = {}):
+        super().__init__(
+            operands=[arg],
+            result_types=[IntegerType()],
+            attributes=attr_dict,
+        )
+
+
+@irdl_op_definition
+class CvtBitsUIntOp(IRDLOperation):
+    """A conversion operation from bitvectors to unsigned integers."""
+
+    name = "asl.cvt_bits_uint"
+
+    T: ClassVar = VarConstraint("T", BaseAttr(BitVectorType))
+
+    arg = operand_def(T)
+    res = result_def(IntegerType)
+
+    assembly_format = "$arg `:` type($arg) `->` type($res) attr-dict"
+
+    def __init__(self, arg: SSAValue, attr_dict: Mapping[str, Attribute] = {}):
+        super().__init__(
+            operands=[arg],
+            result_types=[IntegerType()],
             attributes=attr_dict,
         )
 
@@ -760,7 +902,9 @@ class EqBitsOp(IRDLOperation):
     rhs = operand_def(T)
     res = result_def(builtin.IntegerType(1))
 
-    assembly_format = "$lhs `,` $rhs `:` type($lhs) attr-dict"
+    assembly_format = (
+        "$lhs `,` $rhs `:` `(` type($lhs) `,` type($rhs) `)` `->` type($res) attr-dict"
+    )
 
     def __init__(
         self,
@@ -787,7 +931,9 @@ class NeBitsOp(IRDLOperation):
     rhs = operand_def(T)
     res = result_def(builtin.IntegerType(1))
 
-    assembly_format = "$lhs `,` $rhs `:` type($lhs) attr-dict"
+    assembly_format = (
+        "$lhs `,` $rhs `:` `(` type($lhs) `,` type($rhs) `)` `->` type($res) attr-dict"
+    )
 
     def __init__(
         self,
@@ -798,6 +944,33 @@ class NeBitsOp(IRDLOperation):
         super().__init__(
             operands=[lhs, rhs],
             result_types=[builtin.IntegerType(1)],
+            attributes=attr_dict,
+        )
+
+
+@irdl_op_definition
+class PrintBitsHexOp(IRDLOperation):
+    """A bit vector print function."""
+
+    # Eventually, this should be an external function
+    # This is just a workaround until we can cope with
+    # bitwidth polymorphism.
+
+    name = "asl.print_bits_hex"
+
+    T: ClassVar = VarConstraint("T", BaseAttr(BitVectorType))
+    arg = operand_def(T)
+
+    assembly_format = "$arg `:` type($arg) `->` `(` `)` attr-dict"
+
+    def __init__(
+        self,
+        arg: SSAValue,
+        attr_dict: Mapping[str, Attribute] = {},
+    ):
+        super().__init__(
+            operands=[arg],
+            result_types=[],
             attributes=attr_dict,
         )
 
@@ -1051,14 +1224,21 @@ ASLDialect = Dialect(
         # Bits operations
         AddBitsOp,
         SubBitsOp,
+        MulBitsOp,
         AndBitsOp,
         OrBitsOp,
         XorBitsOp,
+        LslBitsOp,
+        LsrBitsOp,
+        AsrBitsOp,
         AddBitsIntOp,
         SubBitsIntOp,
         NotBitsOp,
+        CvtBitsSIntOp,
+        CvtBitsUIntOp,
         EqBitsOp,
         NeBitsOp,
+        PrintBitsHexOp,
         # Functions
         ReturnOp,
         FuncOp,
