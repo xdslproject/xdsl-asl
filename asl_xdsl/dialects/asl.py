@@ -151,7 +151,14 @@ class BoolAttr(Data[bool]):
 
     def print_parameter(self, printer: Printer) -> None:
         """Print the attribute parameter."""
-        printer.print("true" if self.data else "false")
+        printer.print("<true>" if self.data else "<false>")
+
+
+@irdl_attr_definition
+class StringType(ParametrizedAttribute, TypeAttribute):
+    """A string type."""
+
+    name = "asl.string"
 
 
 @irdl_attr_definition
@@ -323,7 +330,7 @@ class ConstantIntOp(IRDLOperation):
     @classmethod
     def parse(cls, parser: Parser) -> ConstantIntOp:
         """Parse the operation."""
-        value = parser.parse_integer(allow_boolean=False, allow_negative=False)
+        value = parser.parse_integer(allow_boolean=False, allow_negative=True)
         attr_dict = parser.parse_optional_attr_dict()
         return ConstantIntOp(value, attr_dict)
 
@@ -378,6 +385,29 @@ class ConstantBitVectorOp(IRDLOperation):
 
 
 @irdl_op_definition
+class ConstantStringOp(IRDLOperation):
+    """A constant string operation."""
+
+    name = "asl.constant_string"
+
+    value = prop_def(builtin.StringAttr)
+    res = result_def(StringType)
+
+    assembly_format = "$value attr-dict"
+
+    def __init__(
+        self, value: str | builtin.StringAttr, attr_dict: Mapping[str, Attribute] = {}
+    ):
+        if isinstance(value, str):
+            value = builtin.StringAttr(value)
+        super().__init__(
+            result_types=[StringType()],
+            properties={"value": value},
+            attributes=attr_dict,
+        )
+
+
+@irdl_op_definition
 class NotOp(IRDLOperation):
     """A bitwise NOT operation."""
 
@@ -392,6 +422,25 @@ class NotOp(IRDLOperation):
         super().__init__(
             operands=[arg],
             result_types=[BoolType()],
+            attributes=attr_dict,
+        )
+
+
+@irdl_op_definition
+class BoolToI1Op(IRDLOperation):
+    """A hack to convert !asl.bool to i1 so that we can use scf.if."""
+
+    name = "asl.bool_to_i1"
+
+    arg = operand_def(BoolType())
+    res = result_def(builtin.IntegerType(1))
+
+    assembly_format = "$arg `:` type($arg) `->` type($res) attr-dict"
+
+    def __init__(self, arg: SSAValue, attr_dict: Mapping[str, Attribute] = {}):
+        super().__init__(
+            operands=[arg],
+            result_types=[builtin.IntegerType(1)],
             attributes=attr_dict,
         )
 
@@ -464,7 +513,7 @@ class EquivBoolOp(BinaryBoolOp):
 class NegateIntOp(IRDLOperation):
     """An integer negation operation."""
 
-    name = "asl.negate_int"
+    name = "asl.neg_int"
 
     arg = operand_def(IntegerType)
     res = result_def(IntegerType)
@@ -535,14 +584,14 @@ class ExpIntOp(BinaryIntOp):
 class ShiftLeftIntOp(BinaryIntOp):
     """An integer left shift operation."""
 
-    name = "asl.shiftleft_int"
+    name = "asl.shl_int"
 
 
 @irdl_op_definition
 class ShiftRightIntOp(BinaryIntOp):
     """An integer right shift operation."""
 
-    name = "asl.shiftright_int"
+    name = "asl.shr_int"
 
 
 @irdl_op_definition
@@ -1052,7 +1101,9 @@ ASLDialect = Dialect(
         ConstantBoolOp,
         ConstantIntOp,
         ConstantBitVectorOp,
+        ConstantStringOp,
         # Boolean operations
+        BoolToI1Op,
         NotOp,
         AndBoolOp,
         OrBoolOp,
@@ -1095,5 +1146,12 @@ ASLDialect = Dialect(
         # Slices
         SliceSingleOp,
     ],
-    [BoolType, BoolAttr, IntegerType, BitVectorType, BitVectorAttr],
+    [
+        BoolType,
+        BoolAttr,
+        IntegerType,
+        BitVectorType,
+        BitVectorAttr,
+        StringType,
+    ],
 )
