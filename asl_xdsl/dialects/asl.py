@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from abc import ABC
 from collections.abc import Mapping, Sequence
 from typing import ClassVar
 
@@ -349,7 +350,7 @@ class ConstantStringOp(IRDLOperation):
         )
 
 
-class UnaryIntOp(IRDLOperation):
+class UnaryIntOp(IRDLOperation, ABC):
     """A unary integer operation."""
 
     arg = operand_def(IntegerType)
@@ -386,7 +387,7 @@ class Pow2IntOp(UnaryIntOp):
     name = "asl.pow2_int"
 
 
-class BinaryIntOp(IRDLOperation):
+class BinaryIntOp(IRDLOperation, ABC):
     """A binary integer operation."""
 
     lhs = operand_def(IntegerType)
@@ -547,7 +548,7 @@ class IsPow2IntOp(IRDLOperation):
         )
 
 
-class PredicateIntOp(IRDLOperation):
+class PredicateIntOp(IRDLOperation, ABC):
     """An integer predicate operation."""
 
     lhs = operand_def(IntegerType)
@@ -613,7 +614,7 @@ class GtIntOp(PredicateIntOp):
     name = "asl.gt_int"
 
 
-class BinaryBitsOp(IRDLOperation):
+class BinaryBitsOp(IRDLOperation, ABC):
     """A binary bit vector operation."""
 
     T: ClassVar = VarConstraint("T", BaseAttr(BitVectorType))
