@@ -24,12 +24,13 @@ class ASLOptMain(xDSLOptMain):
 
         def interpret_target(module: ModuleOp, output: IO[str]):
             from xdsl.interpreter import Interpreter
-            from xdsl.interpreters import scf
+            from xdsl.interpreters import arith, scf
 
             from asl_xdsl.interpreters.asl import ASLFunctions
 
             interpreter = Interpreter(module, file=output)
             interpreter.register_implementations(ASLFunctions())
+            interpreter.register_implementations(arith.ArithFunctions())
             interpreter.register_implementations(scf.ScfFunctions())
             op = interpreter.get_op_for_symbol("main.0")
             trait = op.get_trait(CallableOpInterface)
