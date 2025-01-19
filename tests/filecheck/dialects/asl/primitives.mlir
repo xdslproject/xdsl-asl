@@ -53,12 +53,25 @@ builtin.module {
 // CHECK-NEXT:    %gt_int = asl.gt_int %int1, %int2
 
     %bits1, %bits2 = "test.op"() : () -> (!asl.bits<32>, !asl.bits<32>)
+    %zero = asl.constant_int 4 {attr_dict}
+    %four = asl.constant_int 4 {attr_dict}
+    %sf = asl.constant_int 64 {attr_dict}
 
     %add_bits = asl.add_bits %bits1, %bits2 : (!asl.bits<32>, !asl.bits<32>) -> !asl.bits<32>
     %add_bits_int = asl.add_bits_int %bits1, %int1 : (!asl.bits<32>, !asl.int) -> !asl.bits<32>
     %sub_bits = asl.sub_bits %bits1, %bits2 : (!asl.bits<32>, !asl.bits<32>) -> !asl.bits<32>
     %sub_bits_int = asl.sub_bits_int %bits1, %int1 : (!asl.bits<32>, !asl.int) -> !asl.bits<32>
     %mul_bits = asl.mul_bits %bits1, %bits2 : (!asl.bits<32>, !asl.bits<32>) -> !asl.bits<32>
+    %lsl_bits = asl.lsl_bits %bits1, %int1 : (!asl.bits<32>, !asl.int) -> !asl.bits<32>
+    %lsr_bits = asl.lsr_bits %bits1, %int1 : (!asl.bits<32>, !asl.int) -> !asl.bits<32>
+    %asr_bits = asl.asr_bits %bits1, %int1 : (!asl.bits<32>, !asl.int) -> !asl.bits<32>
+    %zext_bits = asl.zero_extend_bits %bits1, %sf : (!asl.bits<32>, !asl.int) -> !asl.bits<64>
+    %sext_bits = asl.sign_extend_bits %bits1, %sf : (!asl.bits<32>, !asl.int) -> !asl.bits<64>
+    %append_bits = asl.append_bits %bits1, %bits2 : (!asl.bits<32>, !asl.bits<32>) -> !asl.bits<64>
+    %replicate_bits = asl.replicate_bits %bits1, %four : (!asl.bits<32>, !asl.int) -> !asl.bits<128>
+    %zeros_bits = asl.zeros_bits %int1 : !asl.int -> !asl.bits<32>
+    %ones_bits = asl.ones_bits %int1 : !asl.int -> !asl.bits<32>
+    %mask_bits = asl.mk_mask %int1, %sf : (!asl.int, !asl.int) -> !asl.bits<64>
     %not_bits = asl.not_bits %bits1 : !asl.bits<32> -> !asl.bits<32>
     %sint_bits = asl.cvt_bits_sint %bits1 : !asl.bits<32> -> !asl.int
     %uint_bits = asl.cvt_bits_uint %bits1 : !asl.bits<32> -> !asl.int
@@ -68,12 +81,24 @@ builtin.module {
     %eq_bits = asl.eq_bits %bits1, %bits2 : (!asl.bits<32>, !asl.bits<32>) -> i1
     %ne_bits = asl.ne_bits %bits1, %bits2 : (!asl.bits<32>, !asl.bits<32>) -> i1
     asl.print_bits_hex %bits1 : !asl.bits<32> -> ()
+    %slice = asl.get_slice %bits1, %four, %four : (!asl.bits<32>, !asl.int, !asl.int) -> !asl.bits<4>
+    %set_slice = asl.set_slice %bits1, %zero, %four, %slice : (!asl.bits<32>, !asl.int, !asl.int, !asl.bits<4>) -> !asl.bits<32>
 
 // CHECK:         %add_bits = asl.add_bits %bits1, %bits2 : (!asl.bits<32>, !asl.bits<32>) -> !asl.bits<32>
 // CHECK-NEXT:    %add_bits_int = asl.add_bits_int %bits1, %int1 : (!asl.bits<32>, !asl.int) -> !asl.bits<32>
 // CHECK-NEXT:    %sub_bits = asl.sub_bits %bits1, %bits2 : (!asl.bits<32>, !asl.bits<32>) -> !asl.bits<32>
 // CHECK-NEXT:    %sub_bits_int = asl.sub_bits_int %bits1, %int1 : (!asl.bits<32>, !asl.int) -> !asl.bits<32>
 // CHECK-NEXT:    %mul_bits = asl.mul_bits %bits1, %bits2 : (!asl.bits<32>, !asl.bits<32>) -> !asl.bits<32>
+// CHECK-NEXT:    %lsl_bits = asl.lsl_bits %bits1, %int1 : (!asl.bits<32>, !asl.int) -> !asl.bits<32>
+// CHECK-NEXT:    %lsr_bits = asl.lsr_bits %bits1, %int1 : (!asl.bits<32>, !asl.int) -> !asl.bits<32>
+// CHECK-NEXT:    %asr_bits = asl.asr_bits %bits1, %int1 : (!asl.bits<32>, !asl.int) -> !asl.bits<32>
+// CHECK-NEXT:    %zext_bits = asl.zero_extend_bits %bits1, %sf : (!asl.bits<32>, !asl.int) -> !asl.bits<64>
+// CHECK-NEXT:    %sext_bits = asl.sign_extend_bits %bits1, %sf : (!asl.bits<32>, !asl.int) -> !asl.bits<64>
+// CHECK-NEXT:    %append_bits = asl.append_bits %bits1, %bits2 : (!asl.bits<32>, !asl.bits<32>) -> !asl.bits<64>
+// CHECK-NEXT:    %replicate_bits = asl.replicate_bits %bits1, %four : (!asl.bits<32>, !asl.int) -> !asl.bits<128>
+// CHECK-NEXT:    %zeros_bits = asl.zeros_bits %int1 : !asl.int -> !asl.bits<32>
+// CHECK-NEXT:    %ones_bits = asl.ones_bits %int1 : !asl.int -> !asl.bits<32>
+// CHECK-NEXT:    %mask_bits = asl.mk_mask %int1, %sf : (!asl.int, !asl.int) -> !asl.bits<64>
 // CHECK-NEXT:    %not_bits = asl.not_bits %bits1 : !asl.bits<32> -> !asl.bits<32>
 // CHECK-NEXT:    %sint_bits = asl.cvt_bits_sint %bits1 : !asl.bits<32> -> !asl.int
 // CHECK-NEXT:    %uint_bits = asl.cvt_bits_uint %bits1 : !asl.bits<32> -> !asl.int
@@ -83,4 +108,5 @@ builtin.module {
 // CHECK-NEXT:    %eq_bits = asl.eq_bits %bits1, %bits2 : (!asl.bits<32>, !asl.bits<32>) -> i1
 // CHECK-NEXT:    %ne_bits = asl.ne_bits %bits1, %bits2 : (!asl.bits<32>, !asl.bits<32>) -> i1
 // CHECK-NEXT:    asl.print_bits_hex %bits1 : !asl.bits<32> -> ()
+// CHECK-NEXT:    %slice = asl.get_slice %bits1, %four, %four : (!asl.bits<32>, !asl.int, !asl.int) -> !asl.bits<4>
 }
