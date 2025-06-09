@@ -20,4 +20,10 @@ builtin.module {
 // CHECK-NEXT:    "test.op"() {bits_attr = #asl.bits_attr<42 : 32>} : () -> ()
 
     "test.op"() {string_type = !asl.string} : () -> ()
+
+// CHECK-NEXT:    "test.op"() {string_type = !asl.string} : () -> ()
+
+    "test.op"() {array_type = !asl.array<32x!asl.bits<32>>} : () -> ()
+
+// CHECK-NEXT:    "test.op"() {array_type = !asl.array<32x!asl.bits<32>>} : () -> ()
 }
