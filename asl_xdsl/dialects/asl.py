@@ -891,12 +891,9 @@ class ZeroExtendBitsOp(IRDLOperation):
 
     name = "asl.zero_extend_bits"
 
-    S: ClassVar = VarConstraint("S", BaseAttr(BitVectorType))
-    T: ClassVar = VarConstraint("T", BaseAttr(BitVectorType))
-
-    lhs = operand_def(S)
+    lhs = operand_def(BitVectorType)
     rhs = operand_def(IntegerType())
-    res = result_def(T)
+    res = result_def(BitVectorType)
 
     assembly_format = (
         "$lhs `,` $rhs `:` `(` type($lhs) `,` type($rhs) `)` `->` type($res) attr-dict"
@@ -922,12 +919,9 @@ class SignExtendBitsOp(IRDLOperation):
 
     name = "asl.sign_extend_bits"
 
-    S: ClassVar = VarConstraint("S", BaseAttr(BitVectorType))
-    T: ClassVar = VarConstraint("T", BaseAttr(BitVectorType))
-
-    lhs = operand_def(S)
+    lhs = operand_def(BitVectorType)
     rhs = operand_def(IntegerType())
-    res = result_def(T)
+    res = result_def(BitVectorType)
 
     assembly_format = (
         "$lhs `,` $rhs `:` `(` type($lhs) `,` type($rhs) `)` `->` type($res) attr-dict"
@@ -953,13 +947,9 @@ class AppendBitsOp(IRDLOperation):
 
     name = "asl.append_bits"
 
-    S: ClassVar = VarConstraint("S", BaseAttr(BitVectorType))
-    T: ClassVar = VarConstraint("T", BaseAttr(BitVectorType))
-    U: ClassVar = VarConstraint("U", BaseAttr(BitVectorType))
-
-    lhs = operand_def(S)
-    rhs = operand_def(T)
-    res = result_def(U)
+    lhs = operand_def(BitVectorType)
+    rhs = operand_def(BitVectorType)
+    res = result_def(BitVectorType)
 
     assembly_format = (
         "$lhs `,` $rhs `:` `(` type($lhs) `,` type($rhs) `)` `->` type($res) attr-dict"
@@ -985,12 +975,9 @@ class ReplicateBitsOp(IRDLOperation):
 
     name = "asl.replicate_bits"
 
-    S: ClassVar = VarConstraint("S", BaseAttr(BitVectorType))
-    T: ClassVar = VarConstraint("T", BaseAttr(BitVectorType))
-
-    lhs = operand_def(S)
+    lhs = operand_def(BitVectorType)
     rhs = operand_def(IntegerType())
-    res = result_def(T)
+    res = result_def(BitVectorType)
 
     assembly_format = (
         "$lhs `,` $rhs `:` `(` type($lhs) `,` type($rhs) `)` `->` type($res) attr-dict"
@@ -1016,10 +1003,8 @@ class ZerosBitsOp(IRDLOperation):
 
     name = "asl.zeros_bits"
 
-    T: ClassVar = VarConstraint("T", BaseAttr(BitVectorType))
-
     arg = operand_def(IntegerType())
-    res = result_def(T)
+    res = result_def(BitVectorType)
 
     assembly_format = "$arg `:` type($arg) `->` type($res) attr-dict"
 
@@ -1042,10 +1027,8 @@ class OnesBitsOp(IRDLOperation):
 
     name = "asl.ones_bits"
 
-    T: ClassVar = VarConstraint("T", BaseAttr(BitVectorType))
-
     arg = operand_def(IntegerType())
-    res = result_def(T)
+    res = result_def(BitVectorType)
 
     assembly_format = "$arg `:` type($arg) `->` type($res) attr-dict"
 
@@ -1072,11 +1055,9 @@ class MkMaskBitsOp(IRDLOperation):
 
     name = "asl.mk_mask"
 
-    T: ClassVar = VarConstraint("T", BaseAttr(BitVectorType))
-
     lhs = operand_def(IntegerType())
     rhs = operand_def(IntegerType())
-    res = result_def(T)
+    res = result_def(BitVectorType)
 
     assembly_format = (
         "$lhs `,` $rhs `:` `(` type($lhs) `,` type($rhs) `)` `->` type($res) attr-dict"
@@ -1123,9 +1104,7 @@ class CvtBitsSIntOp(IRDLOperation):
 
     name = "asl.cvt_bits_sint"
 
-    T: ClassVar = VarConstraint("T", BaseAttr(BitVectorType))
-
-    arg = operand_def(T)
+    arg = operand_def(BitVectorType)
     res = result_def(IntegerType)
 
     assembly_format = "$arg `:` type($arg) `->` type($res) attr-dict"
@@ -1144,9 +1123,7 @@ class CvtBitsUIntOp(IRDLOperation):
 
     name = "asl.cvt_bits_uint"
 
-    T: ClassVar = VarConstraint("T", BaseAttr(BitVectorType))
-
-    arg = operand_def(T)
+    arg = operand_def(BitVectorType)
     res = result_def(IntegerType)
 
     assembly_format = "$arg `:` type($arg) `->` type($res) attr-dict"
@@ -1227,8 +1204,7 @@ class PrintBitsHexOp(IRDLOperation):
 
     name = "asl.print_bits_hex"
 
-    T: ClassVar = VarConstraint("T", BaseAttr(BitVectorType))
-    arg = operand_def(T)
+    arg = operand_def(BitVectorType)
 
     assembly_format = "$arg `:` type($arg) `->` `(` `)` attr-dict"
 
@@ -1440,14 +1416,11 @@ class GetSliceOp(IRDLOperation):
 
     name = "asl.get_slice"
 
-    S: ClassVar = VarConstraint("S", BaseAttr(BitVectorType))
-    T: ClassVar = VarConstraint("T", BaseAttr(BitVectorType))
-
-    bits = operand_def(S)
+    bits = operand_def(BitVectorType)
     index = operand_def(IntegerType)
     width = operand_def(IntegerType)
 
-    res = result_def(T)
+    res = result_def(BitVectorType)
 
     assembly_format = (
         "$bits `,` $index `,` $width "
@@ -1475,12 +1448,11 @@ class SetSliceOp(IRDLOperation):
     name = "asl.set_slice"
 
     S: ClassVar = VarConstraint("S", BaseAttr(BitVectorType))
-    T: ClassVar = VarConstraint("T", BaseAttr(BitVectorType))
 
     bits = operand_def(S)
     index = operand_def(IntegerType)
     width = operand_def(IntegerType)
-    rhs = operand_def(T)
+    rhs = operand_def(BitVectorType)
     res = result_def(S)
 
     assembly_format = (
