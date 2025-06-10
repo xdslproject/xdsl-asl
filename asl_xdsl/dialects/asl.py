@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC
 from collections.abc import Mapping, Sequence
-from typing import ClassVar
+from typing import ClassVar, TypeAlias
 
 from xdsl.dialects import builtin
 from xdsl.dialects.utils import parse_func_op_like, print_func_op_like
@@ -199,6 +199,64 @@ class BitVectorType(ParametrizedAttribute, TypeAttribute):
         printer.print("<")
         printer.print(self.width.data)
         printer.print(">")
+
+
+ArrayElementType: TypeAlias = BitVectorType
+
+
+@irdl_attr_definition
+class ArrayType(
+    ParametrizedAttribute,
+    TypeAttribute,
+    builtin.ShapedType,
+    builtin.ContainerType[ArrayElementType],
+):
+    """An array type."""
+
+    name = "asl.array"
+
+    shape: ParameterDef[builtin.ArrayAttr[builtin.IntAttr]]
+    element_type: ParameterDef[ArrayElementType]
+
+    def __init__(
+        self,
+        shape: builtin.ArrayAttr[builtin.IntAttr],
+        element_type: ArrayElementType,
+    ):
+        super().__init__([shape, element_type])
+
+    def verify(self) -> None:
+        if not self.shape.data:
+            raise VerifyException("asl.array shape must not be empty")
+
+        for dim_attr in self.shape.data:
+            if dim_attr.data < 0:
+                raise VerifyException(
+                    "asl.array array dimensions must have non-negative size"
+                )
+
+    def get_num_dims(self) -> int:
+        return len(self.shape.data)
+
+    def get_shape(self) -> tuple[int, ...]:
+        return tuple(i.data for i in self.shape.data)
+
+    def get_element_type(self) -> ArrayElementType:
+        return self.element_type
+
+    @classmethod
+    def parse_parameters(cls, parser: AttrParser):
+        with parser.in_angle_brackets():
+            shape, type = parser.parse_ranked_shape()
+            return builtin.ArrayAttr(builtin.IntAttr(dim) for dim in shape), type
+
+    def print_parameters(self, printer: Printer) -> None:
+        with printer.in_angle_brackets():
+            printer.print_list(
+                self.shape, lambda dim: printer.print_string(f"{dim.data}"), "x"
+            )
+            printer.print_string("x")
+            printer.print_attribute(self.element_type)
 
 
 @irdl_attr_definition
@@ -1251,5 +1309,6 @@ ASLDialect = Dialect(
         BitVectorType,
         BitVectorAttr,
         StringType,
+        ArrayType,
     ],
 )
