@@ -341,9 +341,91 @@ class ASLFunctions(InterpreterFunctions):
         lhs: int
         rhs: int
         (lhs, rhs) = args
-        if lhs >= 2 ** (width - 1):
-            lhs = lhs - 2**width
+        if lhs >= (1 << (width - 1)):
+            lhs = lhs - (1 << width)
         result = to_unsigned(lhs >> rhs, width)
+        return (result,)
+
+    @impl(asl.ZeroExtendBitsOp)
+    def run_zext_bits(
+        self, interpreter: Interpreter, op: asl.ZeroExtendBitsOp, args: tuple[Any, ...]
+    ) -> tuple[Any, ...]:
+        lhs: int
+        (lhs, _) = args
+        result = lhs
+        return (result,)
+
+    @impl(asl.SignExtendBitsOp)
+    def run_sext_bits(
+        self, interpreter: Interpreter, op: asl.SignExtendBitsOp, args: tuple[Any, ...]
+    ) -> tuple[Any, ...]:
+        assert isinstance(op.lhs.type, asl.BitVectorType)
+        width = op.lhs.type.width.data
+        lhs: int
+        rhs: int
+        (lhs, rhs) = args
+        assert rhs >= width
+        result = lhs
+        if result >= (1 << (width - 1)):
+            result |= (1 << rhs) - (1 << width)
+        return (result,)
+
+    @impl(asl.AppendBitsOp)
+    def run_append_bits(
+        self, interpreter: Interpreter, op: asl.AppendBitsOp, args: tuple[Any, ...]
+    ) -> tuple[Any, ...]:
+        assert isinstance(op.rhs.type, asl.BitVectorType)
+        width = op.rhs.type.width.data
+        lhs: int
+        rhs: int
+        (lhs, rhs) = args
+        result = (lhs << width) | rhs
+        return (result,)
+
+    @impl(asl.ReplicateBitsOp)
+    def run_replicate_bits(
+        self, interpreter: Interpreter, op: asl.ReplicateBitsOp, args: tuple[Any, ...]
+    ) -> tuple[Any, ...]:
+        assert isinstance(op.lhs.type, asl.BitVectorType)
+        width = op.lhs.type.width.data
+        lhs: int
+        rhs: int
+        (lhs, rhs) = args
+        assert rhs >= 0
+        result = 0
+        for i in range(rhs):
+            result |= lhs << (i * width)
+        return (result,)
+
+    @impl(asl.ZerosBitsOp)
+    def run_zeros_bits(
+        self, interpreter: Interpreter, op: asl.ZerosBitsOp, args: tuple[Any, ...]
+    ) -> tuple[Any, ...]:
+        arg: int
+        [arg] = args
+        assert arg >= 0
+        result = 0
+        return (result,)
+
+    @impl(asl.OnesBitsOp)
+    def run_ones_bits(
+        self, interpreter: Interpreter, op: asl.OnesBitsOp, args: tuple[Any, ...]
+    ) -> tuple[Any, ...]:
+        arg: int
+        [arg] = args
+        assert arg >= 0
+        result = (1 << arg) - 1
+        return (result,)
+
+    @impl(asl.MkMaskBitsOp)
+    def run_mk_mask_bits(
+        self, interpreter: Interpreter, op: asl.MkMaskBitsOp, args: tuple[Any, ...]
+    ) -> tuple[Any, ...]:
+        lhs: int
+        rhs: int
+        (lhs, rhs) = args
+        assert lhs <= rhs
+        result = (1 << lhs) - 1
         return (result,)
 
     @impl(asl.NotBitsOp)
@@ -396,6 +478,30 @@ class ASLFunctions(InterpreterFunctions):
         rhs: int
         (lhs, rhs) = args
         return (lhs != rhs,)
+
+    @impl(asl.GetSliceOp)
+    def run_get_slice(
+        self, interpreter: Interpreter, op: asl.GetSliceOp, args: tuple[Any, ...]
+    ) -> tuple[Any, ...]:
+        x: int
+        index: int
+        width: int
+        (x, index, width) = args
+        result = (x >> index) & ((1 << width) - 1)
+        return (result,)
+
+    @impl(asl.SetSliceOp)
+    def run_set_slice(
+        self, interpreter: Interpreter, op: asl.SetSliceOp, args: tuple[Any, ...]
+    ) -> tuple[Any, ...]:
+        x: int
+        index: int
+        width: int
+        y: int
+        (x, index, width, y) = args
+        mask = ((1 << width) - 1) << index
+        result = (x & ~mask) | (y << index)
+        return (result,)
 
     @impl(asl.ConstantIntOp)
     def run_constant_int(

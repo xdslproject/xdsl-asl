@@ -886,6 +886,198 @@ class AsrBitsOp(IRDLOperation):
 
 
 @irdl_op_definition
+class ZeroExtendBitsOp(IRDLOperation):
+    """A bit vector zero-extend operation."""
+
+    name = "asl.zero_extend_bits"
+
+    lhs = operand_def(BitVectorType)
+    rhs = operand_def(IntegerType())
+    res = result_def(BitVectorType)
+
+    assembly_format = (
+        "$lhs `,` $rhs `:` `(` type($lhs) `,` type($rhs) `)` `->` type($res) attr-dict"
+    )
+
+    def __init__(
+        self,
+        lhs: SSAValue,
+        rhs: SSAValue,
+        res: SSAValue,
+        attr_dict: Mapping[str, Attribute] = {},
+    ):
+        super().__init__(
+            operands=[lhs, rhs],
+            result_types=[res.type],
+            attributes=attr_dict,
+        )
+
+
+@irdl_op_definition
+class SignExtendBitsOp(IRDLOperation):
+    """A bit vector zero-extend operation."""
+
+    name = "asl.sign_extend_bits"
+
+    lhs = operand_def(BitVectorType)
+    rhs = operand_def(IntegerType())
+    res = result_def(BitVectorType)
+
+    assembly_format = (
+        "$lhs `,` $rhs `:` `(` type($lhs) `,` type($rhs) `)` `->` type($res) attr-dict"
+    )
+
+    def __init__(
+        self,
+        lhs: SSAValue,
+        rhs: SSAValue,
+        res: SSAValue,
+        attr_dict: Mapping[str, Attribute] = {},
+    ):
+        super().__init__(
+            operands=[lhs, rhs],
+            result_types=[res.type],
+            attributes=attr_dict,
+        )
+
+
+@irdl_op_definition
+class AppendBitsOp(IRDLOperation):
+    """A bit vector append operation."""
+
+    name = "asl.append_bits"
+
+    lhs = operand_def(BitVectorType)
+    rhs = operand_def(BitVectorType)
+    res = result_def(BitVectorType)
+
+    assembly_format = (
+        "$lhs `,` $rhs `:` `(` type($lhs) `,` type($rhs) `)` `->` type($res) attr-dict"
+    )
+
+    def __init__(
+        self,
+        lhs: SSAValue,
+        rhs: SSAValue,
+        res: SSAValue,
+        attr_dict: Mapping[str, Attribute] = {},
+    ):
+        super().__init__(
+            operands=[lhs, rhs],
+            result_types=[res.type],
+            attributes=attr_dict,
+        )
+
+
+@irdl_op_definition
+class ReplicateBitsOp(IRDLOperation):
+    """A bit vector replication operation."""
+
+    name = "asl.replicate_bits"
+
+    lhs = operand_def(BitVectorType)
+    rhs = operand_def(IntegerType())
+    res = result_def(BitVectorType)
+
+    assembly_format = (
+        "$lhs `,` $rhs `:` `(` type($lhs) `,` type($rhs) `)` `->` type($res) attr-dict"
+    )
+
+    def __init__(
+        self,
+        lhs: SSAValue,
+        rhs: SSAValue,
+        res: SSAValue,
+        attr_dict: Mapping[str, Attribute] = {},
+    ):
+        super().__init__(
+            operands=[lhs, rhs],
+            result_types=[res.type],
+            attributes=attr_dict,
+        )
+
+
+@irdl_op_definition
+class ZerosBitsOp(IRDLOperation):
+    """A bit vector all-zeros operation."""
+
+    name = "asl.zeros_bits"
+
+    arg = operand_def(IntegerType())
+    res = result_def(BitVectorType)
+
+    assembly_format = "$arg `:` type($arg) `->` type($res) attr-dict"
+
+    def __init__(
+        self,
+        arg: SSAValue,
+        res: SSAValue,
+        attr_dict: Mapping[str, Attribute] = {},
+    ):
+        super().__init__(
+            operands=[arg],
+            result_types=[res.type],
+            attributes=attr_dict,
+        )
+
+
+@irdl_op_definition
+class OnesBitsOp(IRDLOperation):
+    """A bit vector all-ones operation."""
+
+    name = "asl.ones_bits"
+
+    arg = operand_def(IntegerType())
+    res = result_def(BitVectorType)
+
+    assembly_format = "$arg `:` type($arg) `->` type($res) attr-dict"
+
+    def __init__(
+        self,
+        arg: SSAValue,
+        res: SSAValue,
+        attr_dict: Mapping[str, Attribute] = {},
+    ):
+        super().__init__(
+            operands=[arg],
+            result_types=[res.type],
+            attributes=attr_dict,
+        )
+
+
+@irdl_op_definition
+class MkMaskBitsOp(IRDLOperation):
+    """
+    A bit vector mask generation operation.
+    `mk_mask(x, N) : bits(N)` consists of `x` ones.
+    For example, `mk_mask(3, 8) == '0000 0111'`.
+    """
+
+    name = "asl.mk_mask"
+
+    lhs = operand_def(IntegerType())
+    rhs = operand_def(IntegerType())
+    res = result_def(BitVectorType)
+
+    assembly_format = (
+        "$lhs `,` $rhs `:` `(` type($lhs) `,` type($rhs) `)` `->` type($res) attr-dict"
+    )
+
+    def __init__(
+        self,
+        lhs: SSAValue,
+        rhs: SSAValue,
+        res: SSAValue,
+        attr_dict: Mapping[str, Attribute] = {},
+    ):
+        super().__init__(
+            operands=[lhs, rhs],
+            result_types=[res.type],
+            attributes=attr_dict,
+        )
+
+
+@irdl_op_definition
 class NotBitsOp(IRDLOperation):
     """A bitwise NOT operation."""
 
@@ -912,9 +1104,7 @@ class CvtBitsSIntOp(IRDLOperation):
 
     name = "asl.cvt_bits_sint"
 
-    T: ClassVar = VarConstraint("T", BaseAttr(BitVectorType))
-
-    arg = operand_def(T)
+    arg = operand_def(BitVectorType)
     res = result_def(IntegerType)
 
     assembly_format = "$arg `:` type($arg) `->` type($res) attr-dict"
@@ -933,9 +1123,7 @@ class CvtBitsUIntOp(IRDLOperation):
 
     name = "asl.cvt_bits_uint"
 
-    T: ClassVar = VarConstraint("T", BaseAttr(BitVectorType))
-
-    arg = operand_def(T)
+    arg = operand_def(BitVectorType)
     res = result_def(IntegerType)
 
     assembly_format = "$arg `:` type($arg) `->` type($res) attr-dict"
@@ -1016,8 +1204,7 @@ class PrintBitsHexOp(IRDLOperation):
 
     name = "asl.print_bits_hex"
 
-    T: ClassVar = VarConstraint("T", BaseAttr(BitVectorType))
-    arg = operand_def(T)
+    arg = operand_def(BitVectorType)
 
     assembly_format = "$arg `:` type($arg) `->` `(` `)` attr-dict"
 
@@ -1224,28 +1411,66 @@ class CallOp(IRDLOperation):
 
 
 @irdl_op_definition
-class SliceSingleOp(IRDLOperation):
-    """Slice a single element from a bit vector."""
+class GetSliceOp(IRDLOperation):
+    """Extract a slice from a bit vector."""
 
-    name = "asl.slice_single"
+    name = "asl.get_slice"
 
     bits = operand_def(BitVectorType)
     index = operand_def(IntegerType)
+    width = operand_def(IntegerType)
 
-    res = result_def(BitVectorType(1))
+    res = result_def(BitVectorType)
 
     assembly_format = (
-        "$bits `[` $index `]` `:` type($bits) `[` type($index) `]` attr-dict"
+        "$bits `,` $index `,` $width "
+        "`:` `(` type($bits) `,` type($index) `,` type($width) `)` "
+        "`->` type($res) attr-dict"
     )
 
     def __init__(
         self,
         bits: SSAValue,
         index: SSAValue,
+        width: SSAValue,
+        res: SSAValue,
     ):
         super().__init__(
-            operands=[bits, index],
-            result_types=[BitVectorType(1)],
+            operands=[bits, index, width],
+            result_types=[res.type],
+        )
+
+
+@irdl_op_definition
+class SetSliceOp(IRDLOperation):
+    """Insert a slice into a bit vector."""
+
+    name = "asl.set_slice"
+
+    S: ClassVar = VarConstraint("S", BaseAttr(BitVectorType))
+
+    bits = operand_def(S)
+    index = operand_def(IntegerType)
+    width = operand_def(IntegerType)
+    rhs = operand_def(BitVectorType)
+    res = result_def(S)
+
+    assembly_format = (
+        "$bits `,` $index `,` $width `,` $rhs "
+        "`:` `(` type($bits) `,` type($index) `,` type($width) `,` type($rhs) `)` "
+        "`->` type($res) attr-dict"
+    )
+
+    def __init__(
+        self,
+        bits: SSAValue,
+        index: SSAValue,
+        width: SSAValue,
+        rhs: SSAValue,
+    ):
+        super().__init__(
+            operands=[bits, index, width, rhs],
+            result_types=[bits.type],
         )
 
 
@@ -1289,6 +1514,13 @@ ASLDialect = Dialect(
         LslBitsOp,
         LsrBitsOp,
         AsrBitsOp,
+        ZeroExtendBitsOp,
+        SignExtendBitsOp,
+        AppendBitsOp,
+        ReplicateBitsOp,
+        ZerosBitsOp,
+        OnesBitsOp,
+        MkMaskBitsOp,
         AddBitsIntOp,
         SubBitsIntOp,
         NotBitsOp,
@@ -1302,7 +1534,8 @@ ASLDialect = Dialect(
         FuncOp,
         CallOp,
         # Slices
-        SliceSingleOp,
+        GetSliceOp,
+        SetSliceOp,
     ],
     [
         IntegerType,
