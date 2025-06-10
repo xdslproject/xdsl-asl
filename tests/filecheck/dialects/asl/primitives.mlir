@@ -109,4 +109,10 @@ builtin.module {
 // CHECK-NEXT:    %ne_bits = asl.ne_bits %bits1, %bits2 : (!asl.bits<32>, !asl.bits<32>) -> i1
 // CHECK-NEXT:    asl.print_bits_hex %bits1 : !asl.bits<32> -> ()
 // CHECK-NEXT:    %slice = asl.get_slice %bits1, %four, %four : (!asl.bits<32>, !asl.int, !asl.int) -> !asl.bits<4>
+
+    %sint1, %sint2 = "test.op"() : () -> (i8, i8)
+    asl.print_sintN_hex %sint1 : i8
+    asl.print_sintN_dec %sint1 : i8
+// CHECK:         asl.print_sintN_hex %sint1 : i8 -> ()
+// CHECK-NEXT:    asl.print_sintN_dec %sint1 : i8 -> ()
 }
