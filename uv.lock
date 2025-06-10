@@ -31,7 +31,7 @@ requires-dist = [
     { name = "lit", marker = "extra == 'dev'", specifier = "<19.0.0" },
     { name = "pre-commit", marker = "extra == 'dev'", specifier = "==4.0.1" },
     { name = "psutil", marker = "extra == 'dev'", specifier = "==6.1.1" },
-    { name = "pyright", marker = "extra == 'dev'", specifier = "==1.1.390" },
+    { name = "pyright", marker = "extra == 'dev'", specifier = "==1.1.401" },
     { name = "pytest", marker = "extra == 'dev'", specifier = "<8.4" },
     { name = "xdsl", specifier = "==0.40.0" },
 ]
@@ -208,15 +208,15 @@ wheels = [
 
 [[package]]
 name = "pyright"
-version = "1.1.390"
+version = "1.1.401"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "nodeenv" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ba/42/1e0392f35dd275f9f775baf7c86407cef7f6a0d9b8e099a93e5422a7e571/pyright-1.1.390.tar.gz", hash = "sha256:aad7f160c49e0fbf8209507a15e17b781f63a86a1facb69ca877c71ef2e9538d", size = 21950, upload-time = "2024-12-04T14:40:23.497Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/79/9a/7ab2b333b921b2d6bfcffe05a0e0a0bbeff884bd6fb5ed50cd68e2898e53/pyright-1.1.401.tar.gz", hash = "sha256:788a82b6611fa5e34a326a921d86d898768cddf59edde8e93e56087d277cc6f1", size = 3894193, upload-time = "2025-05-21T10:44:52.03Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/43/20/3f492ca789fb17962ad23619959c7fa642082621751514296c58de3bb801/pyright-1.1.390-py3-none-any.whl", hash = "sha256:ecebfba5b6b50af7c1a44c2ba144ba2ab542c227eb49bc1f16984ff714e0e110", size = 18579, upload-time = "2024-12-04T14:40:22.281Z" },
+    { url = "https://files.pythonhosted.org/packages/0d/e6/1f908fce68b0401d41580e0f9acc4c3d1b248adcff00dfaad75cd21a1370/pyright-1.1.401-py3-none-any.whl", hash = "sha256:6fde30492ba5b0d7667c16ecaf6c699fab8d7a1263f6a18549e0b00bf7724c06", size = 5629193, upload-time = "2025-05-21T10:44:50.129Z" },
 ]
 
 [[package]]
