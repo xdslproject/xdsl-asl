@@ -1,5 +1,6 @@
 from typing import Any
 
+from xdsl.dialects import builtin
 from xdsl.interpreter import (
     Interpreter,
     InterpreterFunctions,
@@ -533,6 +534,36 @@ class ASLFunctions(InterpreterFunctions):
         arg: int
         (arg,) = args
         output = f"{width:d}'x{arg:x}"
+        interpreter.print(output)
+        return ()
+
+    @impl(asl.PrintSIntNHexOp)
+    def asl_print_sintN_hex(
+        self, interpreter: Interpreter, op: asl.PrintSIntNHexOp, args: PythonValues
+    ) -> PythonValues:
+        assert isinstance(op.arg.type, builtin.IntegerType)
+        width = op.arg.type.width.data
+        arg: int
+        (arg,) = args
+        if arg >= 0:
+            output = f"i{width:d}'x{arg:x}"
+        else:
+            output = f"-i{width:d}'x{-arg:x}"
+        interpreter.print(output)
+        return ()
+
+    @impl(asl.PrintSIntNDecOp)
+    def asl_print_sintN_dec(
+        self, interpreter: Interpreter, op: asl.PrintSIntNDecOp, args: PythonValues
+    ) -> PythonValues:
+        assert isinstance(op.arg.type, builtin.IntegerType)
+        width = op.arg.type.width.data
+        arg: int
+        (arg,) = args
+        if arg >= 0:
+            output = f"i{width:d}'d{arg:d}"
+        else:
+            output = f"-i{width:d}'d{-arg:d}"
         interpreter.print(output)
         return ()
 

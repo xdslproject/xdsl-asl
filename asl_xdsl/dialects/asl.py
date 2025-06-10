@@ -1220,6 +1220,58 @@ class PrintBitsHexOp(IRDLOperation):
         )
 
 
+@irdl_op_definition
+class PrintSIntNHexOp(IRDLOperation):
+    """A sized integer print function."""
+
+    # Eventually, this should be an external function
+    # This is just a workaround until we can cope with
+    # bitwidth polymorphism.
+
+    name = "asl.print_sintN_hex"
+
+    arg = operand_def(builtin.IntegerType)
+
+    assembly_format = "$arg `:` type($arg) `->` `(` `)` attr-dict"
+
+    def __init__(
+        self,
+        arg: SSAValue,
+        attr_dict: Mapping[str, Attribute] = {},
+    ):
+        super().__init__(
+            operands=[arg],
+            result_types=[],
+            attributes=attr_dict,
+        )
+
+
+@irdl_op_definition
+class PrintSIntNDecOp(IRDLOperation):
+    """A sized integer print function."""
+
+    # Eventually, this should be an external function
+    # This is just a workaround until we can cope with
+    # bitwidth polymorphism.
+
+    name = "asl.print_sintN_dec"
+
+    arg = operand_def(builtin.IntegerType)
+
+    assembly_format = "$arg `:` type($arg) `->` `(` `)` attr-dict"
+
+    def __init__(
+        self,
+        arg: SSAValue,
+        attr_dict: Mapping[str, Attribute] = {},
+    ):
+        super().__init__(
+            operands=[arg],
+            result_types=[],
+            attributes=attr_dict,
+        )
+
+
 class FuncOpCallableInterface(CallableOpInterface):
     @classmethod
     def get_callable_region(cls, op: Operation) -> Region:
@@ -1529,6 +1581,8 @@ ASLDialect = Dialect(
         EqBitsOp,
         NeBitsOp,
         PrintBitsHexOp,
+        PrintSIntNHexOp,
+        PrintSIntNDecOp,
         # Functions
         ReturnOp,
         FuncOp,
