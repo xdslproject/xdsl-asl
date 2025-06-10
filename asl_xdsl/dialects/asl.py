@@ -833,12 +833,9 @@ class ZeroExtendBitsOp(IRDLOperation):
 
     name = "asl.zero_extend_bits"
 
-    S: ClassVar = VarConstraint("S", BaseAttr(BitVectorType))
-    T: ClassVar = VarConstraint("T", BaseAttr(BitVectorType))
-
-    lhs = operand_def(S)
+    lhs = operand_def(BitVectorType)
     rhs = operand_def(IntegerType())
-    res = result_def(T)
+    res = result_def(BitVectorType)
 
     assembly_format = (
         "$lhs `,` $rhs `:` `(` type($lhs) `,` type($rhs) `)` `->` type($res) attr-dict"
