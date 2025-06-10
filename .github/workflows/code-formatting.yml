@@ -35,4 +35,4 @@ jobs:
         pip install --upgrade pip
 
     - name: Run code formatting checks with pre-commit
-      uses: pre-commit/action@v3.0.0
+      uses: pre-commit/action@v3.0.1
