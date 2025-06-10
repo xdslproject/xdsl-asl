@@ -17,6 +17,16 @@ class ASLOptMain(xDSLOptMain):
         self.ctx.load_dialect(ASLDepDialect)
 
     def register_all_passes(self):
+        def get_integer_range_analysis_pass():
+            from asl_xdsl.transforms.test_integer_range_analysis import (
+                TestIntegerRangeAnalysis,
+            )
+
+            return TestIntegerRangeAnalysis
+
+        self.register_pass(
+            "test-integer-range-analysis", get_integer_range_analysis_pass
+        )
         return super().register_all_passes()
 
     def register_all_targets(self):
