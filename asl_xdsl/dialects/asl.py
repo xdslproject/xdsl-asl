@@ -45,6 +45,12 @@ from xdsl.traits import (
     SymbolUserOpInterface,
 )
 
+from asl_xdsl.analysis.integer_range import (
+    IntegerRange,
+    IntegerRangeAnalysis,
+    IntegerRangeTrait,
+)
+
 
 @irdl_attr_definition
 class ConstraintExactAttr(ParametrizedAttribute):
@@ -308,6 +314,13 @@ class BitVectorAttr(ParametrizedAttribute):
         printer.print(">")
 
 
+class ConstantIntIntegerRangeTrait(IntegerRangeTrait):
+    @staticmethod
+    def compute_analysis(op: Operation, analysis: IntegerRangeAnalysis) -> None:
+        assert isinstance(op, ConstantIntOp), "Expected ConstantIntOp"
+        analysis.set_range(op.res, IntegerRange(op.value.data, op.value.data))
+
+
 @irdl_op_definition
 class ConstantIntOp(IRDLOperation):
     """A constant arbitrary-sized integer operation."""
@@ -316,6 +329,8 @@ class ConstantIntOp(IRDLOperation):
 
     value = prop_def(builtin.IntAttr)
     res = result_def(IntegerType)
+
+    traits = traits_def(ConstantIntIntegerRangeTrait())
 
     def __init__(
         self, value: int | builtin.IntAttr, attr_dict: Mapping[str, Attribute] = {}
@@ -573,6 +588,21 @@ class AlignIntOp(BinaryIntOp):
     name = "asl.align_int"
 
 
+class MoxPow2IntIntegerRangeTrait(IntegerRangeTrait):
+    @staticmethod
+    def compute_analysis(op: Operation, analysis: IntegerRangeAnalysis) -> None:
+        assert isinstance(op, ModPow2IntOp), "Expected ModPow2IntOp"
+        rhs_upper = analysis.get_range(op.rhs).upper_bound
+        lhs_bounds = analysis.get_range(op.lhs)
+        if rhs_upper is None:
+            # If the rhs is unbounded, the result is not more bounded than the lhs.
+            analysis.set_range(op.res, lhs_bounds)
+            return
+
+        bound_from_rhs = IntegerRange(0, 2**rhs_upper - 1)
+        analysis.set_range(op.res, lhs_bounds & bound_from_rhs)
+
+
 @irdl_op_definition
 class ModPow2IntOp(BinaryIntOp):
     """
@@ -581,6 +611,8 @@ class ModPow2IntOp(BinaryIntOp):
     """
 
     name = "asl.mod_pow2_int"
+
+    traits = traits_def(MoxPow2IntIntegerRangeTrait())
 
 
 @irdl_op_definition
