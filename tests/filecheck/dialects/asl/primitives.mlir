@@ -119,11 +119,11 @@ builtin.module {
     asl.global "G" : !asl.bits<32>
     asl.global "A" : !asl.array<16 x !asl.bits<32>>
 
-    %gref = asl.address_of(@G) : !asl.ref<!asl.bits<32>>
-    %aref = asl.address_of(@A) : !asl.ref<!asl.array<16 x !asl.bits<32>>>
-    %eref = asl.array_ref(%aref, %int1) : !asl.ref<!asl.array<16 x !asl.bits<32>>>
-    asl.store(%gref) = %bits1 : !asl.bits<32>
-    %load = asl.load(%eref) : !asl.bits<32>
+    %gref = asl.address_of @G : !asl.ref<!asl.bits<32>>
+    %aref = asl.address_of @A : !asl.ref<!asl.array<16 x !asl.bits<32>>>
+    %eref = asl.array_ref %aref[%int1] : !asl.ref<!asl.array<16 x !asl.bits<32>>>
+    asl.store %bits1 to %gref : !asl.bits<32>
+    %load = asl.load from %eref : !asl.bits<32>
 // CHECK:         asl.global "G" : !asl.bits<32>
 // CHECK-NEXT:    asl.global "A" : !asl.array<16x!asl.bits<32>>
 // CHECK-NEXT:    %gref = asl.address_of(@G) : !asl.ref<!asl.bits<32>>
