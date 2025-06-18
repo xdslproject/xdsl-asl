@@ -1652,9 +1652,11 @@ class AddressOfOp(IRDLOperation):
     """
 
     name = "asl.address_of"
-    assembly_format = "`(` $symbol `)` `:` type($res) attr-dict"
+    
     symbol = prop_def(SymbolRefAttr)
     res = result_def()
+    
+    assembly_format = "`(` $symbol `)` `:` type($res) attr-dict"
 
 
 @irdl_op_definition
