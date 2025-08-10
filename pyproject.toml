@@ -11,7 +11,7 @@ dev = [
   "pytest<8.5",
   "filecheck==1.0.2",
   "pre-commit==4.3.0",
-  "psutil==6.1.1",
+  "psutil==7.0.0",
 ]
 
 [dependency-groups]
