@@ -5,6 +5,12 @@ from collections.abc import Mapping, Sequence
 from typing import ClassVar, TypeAlias
 
 from xdsl.dialects import builtin
+from xdsl.dialects.builtin import (
+    IntAttr,
+    StringAttr,
+    SymbolRefAttr,
+    TupleType,
+)
 from xdsl.dialects.utils import parse_func_op_like, print_func_op_like
 from xdsl.ir import (
     Attribute,
@@ -18,8 +24,11 @@ from xdsl.ir import (
     VerifyException,
 )
 from xdsl.irdl import (
+    AnyAttr,
     BaseAttr,
+    GenericAttrConstraint,
     IRDLOperation,
+    ParamAttrConstraint,
     ParameterDef,
     VarConstraint,
     irdl_attr_definition,
@@ -263,6 +272,24 @@ class ArrayType(
             )
             printer.print_string("x")
             printer.print_attribute(self.element_type)
+
+    @classmethod
+    def constr(
+        cls,
+        element_type: IRDLAttrConstraint | None = None,
+        *,
+        shape: IRDLGenericAttrConstraint[builtin.ArrayAttr[IntAttr]] | None = None,
+    ) -> GenericAttrConstraint[ArrayType]:
+        if element_type is None and shape is None:
+            return BaseAttr[ArrayType](ArrayType)
+        shape_constr = AnyAttr() if shape is None else shape
+        return ParamAttrConstraint[ArrayType](
+            ArrayType,
+            (
+                shape_constr,
+                element_type,
+            ),
+        )
 
 
 @irdl_attr_definition
@@ -1558,6 +1585,154 @@ class SetSliceOp(IRDLOperation):
         )
 
 
+@irdl_attr_definition
+class ReferenceType(ParametrizedAttribute, TypeAttribute):
+    """
+    The type of a reference to an object
+    """
+
+    name = "asl.ref"
+    type: ParameterDef[Attribute]
+
+    def print_parameters(self, printer: Printer) -> None:
+        # We need this to pretty print a tuple and its members if
+        # this is referencing one, otherwise just let the type
+        # handle its own printing
+        printer.print("<")
+        printer.print(self.type)
+        printer.print(">")
+
+    @classmethod
+    def parse_parameters(cls, parser: AttrParser) -> list[Attribute]:
+        # This is complicated by the fact we need to parse tuple
+        # here also as the buildin dialect does not support this
+        # yet
+        parser.parse_characters("<")
+        has_tuple = parser.parse_optional_keyword("tuple")
+        if has_tuple is None:
+            param_type = parser.parse_type()
+            parser.parse_characters(">")
+            return [param_type]
+        else:
+            # If its a tuple then there are any number of types
+            def parse_types():
+                return parser.parse_type()
+
+            param_types = parser.parse_comma_separated_list(
+                parser.Delimiter.ANGLE, parse_types
+            )
+            parser.parse_characters(">")
+            return [TupleType(param_types)]
+
+    @classmethod
+    def constr(
+        cls,
+        type: IRDLAttrConstraint | None = None,
+    ) -> GenericAttrConstraint[ReferenceType]:
+        if type is None:
+            return BaseAttr[ReferenceType](ReferenceType)
+        return ParamAttrConstraint[ReferenceType](
+            ReferenceType,
+            (type,),
+        )
+
+
+@irdl_op_definition
+class GlobalOp(IRDLOperation):
+    name = "asl.global"
+
+    assembly_format = "$sym_name `:` $global_type attr-dict"
+
+    global_type = prop_def(Attribute)
+    sym_name = prop_def(StringAttr)
+
+    traits = traits_def(SymbolOpInterface())
+
+    def __init__(
+        self,
+        global_type: Attribute,
+        sym_name: str | StringAttr,
+    ):
+        if isinstance(sym_name, str):
+            sym_name = StringAttr(sym_name)
+
+        props: dict[str, Attribute] = {
+            "global_type": global_type,
+            "sym_name": sym_name,
+        }
+
+        super().__init__(properties=props)
+
+
+@irdl_op_definition
+class AddressOfOp(IRDLOperation):
+    """
+    Convert a global reference to an SSA-value to be
+    used in other operations.
+
+    %p = asl.address_of @symbol : !asl.ref<i1>
+    """
+
+    name = "asl.address_of"
+
+    symbol = prop_def(SymbolRefAttr)
+    res = result_def()
+    
+    assembly_format = "`(` $symbol `)` `:` type($res) attr-dict"
+
+    assembly_format = "$symbol `:` type($res) attr-dict"
+
+
+@irdl_op_definition
+class ArrayRefOp(IRDLOperation):
+    """
+    Create a ref for an array element.
+
+    %element_ref = asl.array_ref %array_ref [ %index ]
+        : !asl.ref<!asl.array<16 x i8>> -> !asl.ref<i8>
+    """
+
+    name = "asl.array_ref"
+
+    T: ClassVar = VarConstraint("T", AnyAttr())
+    A: ClassVar = VarConstraint("A", ArrayType.constr(T))
+    ref = operand_def(ReferenceType.constr(A))
+    index = operand_def(IntegerType())
+    res = result_def(ReferenceType.constr(T))
+
+    assembly_format = "$ref `[` $index `]` `:` type($ref) `->` type($res) attr-dict"
+
+
+@irdl_op_definition
+class LoadOp(IRDLOperation):
+    """
+    Load from a reference.
+    """
+
+    name = "asl.load"
+
+    T: ClassVar = VarConstraint("T", AnyAttr())
+    ref = operand_def(ReferenceType.constr(T))
+    res = result_def(T)
+
+    assembly_format = "`from` $ref `:` type($res) attr-dict"
+
+
+@irdl_op_definition
+class StoreOp(IRDLOperation):
+    """
+    Store from a reference.
+    """
+
+    name = "asl.store"
+
+    T: ClassVar = VarConstraint("T", AnyAttr())
+    ref = operand_def(ReferenceType.constr(T))
+    value = operand_def(T)
+
+    assembly_format = "$value `to` $ref `:` type($value) attr-dict"
+
+
 ASLDialect = Dialect(
     "asl",
     [
@@ -1622,6 +1797,12 @@ ASLDialect = Dialect(
         # Slices
         GetSliceOp,
         SetSliceOp,
+        # References
+        GlobalOp,
+        AddressOfOp,
+        ArrayRefOp,
+        LoadOp,
+        StoreOp,
     ],
     [
         IntegerType,
@@ -1629,5 +1810,6 @@ ASLDialect = Dialect(
         BitVectorAttr,
         StringType,
         ArrayType,
+        ReferenceType,
     ],
 )
