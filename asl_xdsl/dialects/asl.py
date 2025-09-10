@@ -1601,15 +1601,7 @@ class ReferenceType(ParametrizedAttribute, TypeAttribute):
         # this is referencing one, otherwise just let the type
         # handle its own printing
         printer.print("<")
-        if isinstance(self.type, TupleType):
-            printer.print("tuple<")
-            for idx, t in enumerate(self.type.types.data):
-                if idx > 0:
-                    printer.print(", ")
-                printer.print(t)
-            printer.print(">")
-        else:
-            printer.print(self.type)
+        printer.print(self.type)
         printer.print(">")
 
     @classmethod
@@ -1680,30 +1672,37 @@ class AddressOfOp(IRDLOperation):
     Convert a global reference to an SSA-value to be
     used in other operations.
 
-    %p = asl.address_of(@symbol) : !asl.ref<i1>
+    %p = asl.address_of @symbol : !asl.ref<i1>
     """
 
     name = "asl.address_of"
-    
+
     symbol = prop_def(SymbolRefAttr)
     res = result_def()
     
     assembly_format = "`(` $symbol `)` `:` type($res) attr-dict"
+
+    assembly_format = "$symbol `:` type($res) attr-dict"
 
 
 @irdl_op_definition
 class ArrayRefOp(IRDLOperation):
     """
     Create a ref for an array element.
+
+    %element_ref = asl.array_ref %array_ref [ %index ]
+        : !asl.ref<!asl.array<16 x i8>> -> !asl.ref<i8>
     """
 
     name = "asl.array_ref"
+
     T: ClassVar = VarConstraint("T", AnyAttr())
     A: ClassVar = VarConstraint("A", ArrayType.constr(T))
-    assembly_format = "`(` $ref `,` $index `)` `:` type($ref) attr-dict"
     ref = operand_def(ReferenceType.constr(A))
     index = operand_def(IntegerType())
     res = result_def(ReferenceType.constr(T))
+
+    assembly_format = "$ref `[` $index `]` `:` type($ref) `->` type($res) attr-dict"
 
 
 @irdl_op_definition
@@ -1713,10 +1712,12 @@ class LoadOp(IRDLOperation):
     """
 
     name = "asl.load"
+
     T: ClassVar = VarConstraint("T", AnyAttr())
-    assembly_format = "`(` $ref `)` `:` type($res) attr-dict"
     ref = operand_def(ReferenceType.constr(T))
     res = result_def(T)
+
+    assembly_format = "`from` $ref `:` type($res) attr-dict"
 
 
 @irdl_op_definition
@@ -1726,10 +1727,12 @@ class StoreOp(IRDLOperation):
     """
 
     name = "asl.store"
+
     T: ClassVar = VarConstraint("T", AnyAttr())
-    assembly_format = "`(` $ref `)` `=` $value `:` type($value) attr-dict"
     ref = operand_def(ReferenceType.constr(T))
     value = operand_def(T)
+
+    assembly_format = "$value `to` $ref `:` type($value) attr-dict"
 
 
 ASLDialect = Dialect(
