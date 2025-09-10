@@ -27,8 +27,6 @@ from xdsl.irdl import (
     AnyAttr,
     BaseAttr,
     GenericAttrConstraint,
-    IRDLAttrConstraint,
-    IRDLGenericAttrConstraint,
     IRDLOperation,
     ParamAttrConstraint,
     ParameterDef,
