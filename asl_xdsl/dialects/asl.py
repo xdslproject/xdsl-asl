@@ -126,9 +126,11 @@ def _print_integer_constraint(
 ):
     """Print an integer constraint using a shorthand syntax."""
     if isinstance(constraint, ConstraintExactAttr):
-        printer.print(constraint.value)
+        printer.print_int(constraint.value)
     else:
-        printer.print(constraint.min_value, ":", constraint.max_value)
+        printer.print_int(constraint.min_value)
+        printer.print_string(":")
+        printer.print_int(constraint.max_value)
 
 
 @irdl_attr_definition
@@ -334,9 +336,10 @@ class ConstantIntOp(IRDLOperation):
 
     def print(self, printer: Printer) -> None:
         """Print the operation."""
-        printer.print(" ", self.value.data)
+        printer.print_string(" ")
+        printer.print_int(self.value.data)
         if self.attributes:
-            printer.print(" ")
+            printer.print_string(" ")
             printer.print_attr_dict(self.attributes)
 
 
@@ -376,9 +379,12 @@ class ConstantBitVectorOp(IRDLOperation):
 
     def print(self, printer: Printer) -> None:
         """Print the operation."""
-        printer.print(" ", self.value.value.data, " : ", self.res.type)
+        printer.print_string(" ")
+        printer.print_int(self.value.value.data)
+        printer.print_string(" : ")
+        printer.print_attribute(self.res.type)
         if self.attributes:
-            printer.print(" ")
+            printer.print_string(" ")
             printer.print_attr_dict(self.attributes)
 
 

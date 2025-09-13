@@ -101,9 +101,10 @@ class ConstantIntOp(IRDLOperation):
 
     def print(self, printer: Printer) -> None:
         """Print the operation."""
-        printer.print(" ", self.value_attr.data)
+        printer.print_string(" ")
+        printer.print_int(self.value_attr.data)
         if self.attributes:
-            printer.print(" ")
+            printer.print_string(" ")
             printer.print_attr_dict(self.attributes)
 
 
@@ -144,9 +145,13 @@ class ConstantBitsOp(IRDLOperation):
         return op
 
     def print(self, printer: Printer) -> None:
-        printer.print(" ", self.value_attr.data, " : bits<", self.value_width, ">")
+        printer.print_string(" ")
+        printer.print_int(self.value_attr.data)
+        printer.print_string(" : bits<")
+        printer.print_ssa_value(self.value_width)
+        printer.print_string(">")
         if self.attributes:
-            printer.print(" ")
+            printer.print_string(" ")
             printer.print_attr_dict(self.attributes)
 
 
