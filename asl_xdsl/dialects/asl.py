@@ -20,12 +20,12 @@ from xdsl.ir import (
 from xdsl.irdl import (
     BaseAttr,
     IRDLOperation,
-    ParameterDef,
     VarConstraint,
     irdl_attr_definition,
     irdl_op_definition,
     operand_def,
     opt_operand_def,
+    param_def,
     prop_def,
     region_def,
     result_def,
@@ -58,10 +58,7 @@ class ConstraintExactAttr(ParametrizedAttribute):
 
     name = "asl.int_constraint_exact"
 
-    value_attr: ParameterDef[builtin.IntAttr]
-
-    def __init__(self, value: int):
-        super().__init__([builtin.IntAttr(value)])
+    value_attr: builtin.IntAttr = param_def(converter=builtin.IntAttr.get)
 
     @property
     def value(self) -> int:
@@ -71,12 +68,12 @@ class ConstraintExactAttr(ParametrizedAttribute):
     def parse_parameter(cls, parser: AttrParser) -> int:
         """Parse the attribute parameter."""
         with parser.in_angle_brackets():
-            value = parser.parse_integer()
-        return value
+            return parser.parse_integer()
 
     def print_parameter(self, printer: Printer) -> None:
         """Print the attribute parameter."""
-        printer.print("<", self.value, ">")
+        with printer.in_angle_brackets():
+            return printer.print_int(self.value_attr.data)
 
 
 @irdl_attr_definition
@@ -85,11 +82,8 @@ class ConstraintRangeAttr(ParametrizedAttribute):
 
     name = "asl.int_constraint_range"
 
-    min_value_attr: ParameterDef[builtin.IntAttr]
-    max_value_attr: ParameterDef[builtin.IntAttr]
-
-    def __init__(self, min_value: int, max_value: int):
-        super().__init__([builtin.IntAttr(min_value), builtin.IntAttr(max_value)])
+    min_value_attr: builtin.IntAttr = param_def(converter=builtin.IntAttr.get)
+    max_value_attr: builtin.IntAttr = param_def(converter=builtin.IntAttr.get)
 
     @property
     def min_value(self) -> int:
@@ -110,7 +104,10 @@ class ConstraintRangeAttr(ParametrizedAttribute):
 
     def print_parameters(self, printer: Printer) -> None:
         """Print the attribute parameters."""
-        printer.print("<", self.min_value, ":", self.max_value, ">")
+        with printer.in_angle_brackets():
+            printer.print_int(self.min_value)
+            printer.print_string(":")
+            printer.print_int(self.max_value)
 
 
 def _parse_integer_constraint(
@@ -147,12 +144,10 @@ class IntegerType(ParametrizedAttribute, TypeAttribute):
 
     name = "asl.int"
 
-    constraints_attr: ParameterDef[
-        builtin.ArrayAttr[ConstraintExactAttr | ConstraintRangeAttr]
-    ]
+    constraints_attr: builtin.ArrayAttr[ConstraintExactAttr | ConstraintRangeAttr]
 
     def __init__(self, constraints: Sequence[Attribute] = ()):
-        super().__init__([builtin.ArrayAttr(constraints)])
+        super().__init__(builtin.ArrayAttr(constraints))
 
     @property
     def constraints(self) -> Sequence[ConstraintExactAttr | ConstraintRangeAttr]:
@@ -173,12 +168,11 @@ class IntegerType(ParametrizedAttribute, TypeAttribute):
     def print_parameters(self, printer: Printer) -> None:
         if not self.constraints:
             return
-        printer.print("<")
-        printer.print_list(
-            self.constraints,
-            lambda constr: _print_integer_constraint(constr, printer),
-        )
-        printer.print(">")
+        with printer.in_angle_brackets():
+            printer.print_list(
+                self.constraints,
+                lambda constr: _print_integer_constraint(constr, printer),
+            )
 
 
 @irdl_attr_definition
@@ -187,10 +181,7 @@ class BitVectorType(ParametrizedAttribute, TypeAttribute):
 
     name = "asl.bits"
 
-    width: ParameterDef[builtin.IntAttr]
-
-    def __init__(self, width: int):
-        super().__init__([builtin.IntAttr(width)])
+    width: builtin.IntAttr = param_def(converter=builtin.IntAttr.get)
 
     @classmethod
     def parse_parameters(cls, parser: AttrParser) -> Sequence[Attribute]:
@@ -202,9 +193,8 @@ class BitVectorType(ParametrizedAttribute, TypeAttribute):
 
     def print_parameters(self, printer: Printer) -> None:
         """Print the attribute parameters."""
-        printer.print("<")
-        printer.print(self.width.data)
-        printer.print(">")
+        with printer.in_angle_brackets():
+            printer.print_int(self.width.data)
 
 
 ArrayElementType: TypeAlias = BitVectorType
@@ -221,15 +211,8 @@ class ArrayType(
 
     name = "asl.array"
 
-    shape: ParameterDef[builtin.ArrayAttr[builtin.IntAttr]]
-    element_type: ParameterDef[ArrayElementType]
-
-    def __init__(
-        self,
-        shape: builtin.ArrayAttr[builtin.IntAttr],
-        element_type: ArrayElementType,
-    ):
-        super().__init__([shape, element_type])
+    shape: builtin.ArrayAttr[builtin.IntAttr]
+    element_type: ArrayElementType
 
     def verify(self) -> None:
         if not self.shape.data:
@@ -271,8 +254,12 @@ class BitVectorAttr(ParametrizedAttribute):
 
     name = "asl.bits_attr"
 
-    value: ParameterDef[builtin.IntAttr]
-    type: ParameterDef[BitVectorType]
+    value: builtin.IntAttr
+    type: BitVectorType
+
+    def __init__(self, value: int, type: BitVectorType):
+        value = self.normalize_value(value, type.width.data)
+        super().__init__(builtin.IntAttr(value), type)
 
     def maximum_value(self) -> int:
         """Return the maximum value that can be represented."""
@@ -283,10 +270,6 @@ class BitVectorAttr(ParametrizedAttribute):
         """Normalize the value to the range [0, 2^width)."""
         max_value = 1 << width
         return ((value % max_value) + max_value) % max_value
-
-    def __init__(self, value: int, type: BitVectorType):
-        value = self.normalize_value(value, type.width.data)
-        super().__init__([builtin.IntAttr(value), type])
 
     def _verify(self) -> None:
         if self.value.data < 0 or self.value.data > self.maximum_value():
@@ -307,11 +290,10 @@ class BitVectorAttr(ParametrizedAttribute):
 
     def print_parameters(self, printer: Printer) -> None:
         """Print the attribute parameters."""
-        printer.print("<")
-        printer.print(self.value.data)
-        printer.print(" : ")
-        printer.print(self.type.width.data)
-        printer.print(">")
+        with printer.in_angle_brackets():
+            printer.print_string(str(self.value.data))
+            printer.print_string(" : ")
+            printer.print_string(str(self.type.width.data))
 
 
 class ConstantIntIntegerRangeTrait(IntegerRangeTrait):
