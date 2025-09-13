@@ -15,6 +15,7 @@ from xdsl.interpreter import (
 )
 from xdsl.ir import Operation
 from xdsl.utils.comparisons import to_signed, to_unsigned
+from xdsl.utils.hints import isa
 
 from asl_xdsl.dialects import asl
 
@@ -541,7 +542,7 @@ class ASLFunctions(InterpreterFunctions):
     def asl_print_sintN_hex(
         self, interpreter: Interpreter, op: asl.PrintSIntNHexOp, args: PythonValues
     ) -> PythonValues:
-        assert isinstance(op.arg.type, builtin.IntegerType)
+        assert isa(op.arg.type, builtin.IntegerType)
         width = op.arg.type.width.data
         arg: int
         (arg,) = args
@@ -556,7 +557,7 @@ class ASLFunctions(InterpreterFunctions):
     def asl_print_sintN_dec(
         self, interpreter: Interpreter, op: asl.PrintSIntNDecOp, args: PythonValues
     ) -> PythonValues:
-        assert isinstance(op.arg.type, builtin.IntegerType)
+        assert isa(op.arg.type, builtin.IntegerType)
         width = op.arg.type.width.data
         arg: int
         (arg,) = args
