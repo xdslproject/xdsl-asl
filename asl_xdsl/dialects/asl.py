@@ -46,6 +46,7 @@ from xdsl.parser import AttrParser, Parser
 from xdsl.printer import Printer
 from xdsl.traits import (
     CallableOpInterface,
+    Commutative,
     ConstantLike,
     HasParent,
     IsolatedFromAbove,
@@ -519,6 +520,8 @@ class AddIntOp(BinaryIntOp):
 
     name = "asl.add_int"
 
+    traits = traits_def(Commutative())
+
 
 @irdl_op_definition
 class SubIntOp(BinaryIntOp):
@@ -532,6 +535,8 @@ class MulIntOp(BinaryIntOp):
     """An integer multiplication operation."""
 
     name = "asl.mul_int"
+
+    traits = traits_def(Commutative())
 
 
 @irdl_op_definition
@@ -697,12 +702,16 @@ class EqIntOp(PredicateIntOp):
 
     name = "asl.eq_int"
 
+    traits = traits_def(Commutative())
+
 
 @irdl_op_definition
 class NeIntOp(PredicateIntOp):
     """An integer inequality operation."""
 
     name = "asl.ne_int"
+
+    traits = traits_def(Commutative())
 
 
 @irdl_op_definition
@@ -765,6 +774,8 @@ class AddBitsOp(BinaryBitsOp):
 
     name = "asl.add_bits"
 
+    traits = traits_def(Commutative())
+
 
 @irdl_op_definition
 class SubBitsOp(BinaryBitsOp):
@@ -779,12 +790,16 @@ class MulBitsOp(BinaryBitsOp):
 
     name = "asl.mul_bits"
 
+    traits = traits_def(Commutative())
+
 
 @irdl_op_definition
 class AndBitsOp(BinaryBitsOp):
     """A bit vector AND operation."""
 
     name = "asl.and_bits"
+
+    traits = traits_def(Commutative())
 
 
 @irdl_op_definition
@@ -793,12 +808,16 @@ class OrBitsOp(BinaryBitsOp):
 
     name = "asl.or_bits"
 
+    traits = traits_def(Commutative())
+
 
 @irdl_op_definition
 class XorBitsOp(BinaryBitsOp):
     """A bit vector XOR operation."""
 
     name = "asl.xor_bits"
+
+    traits = traits_def(Commutative())
 
 
 @irdl_op_definition
@@ -1203,6 +1222,8 @@ class EqBitsOp(IRDLOperation):
 
     name = "asl.eq_bits"
 
+    traits = traits_def(Commutative())
+
     T: ClassVar = VarConstraint("T", BaseAttr(BitVectorType))
 
     lhs = operand_def(T)
@@ -1231,6 +1252,8 @@ class NeBitsOp(IRDLOperation):
     """A bit vector NE operation."""
 
     name = "asl.ne_bits"
+
+    traits = traits_def(Commutative())
 
     T: ClassVar = VarConstraint("T", BaseAttr(BitVectorType))
 
