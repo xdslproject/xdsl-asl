@@ -18,6 +18,7 @@ from xdsl.utils.comparisons import to_signed, to_unsigned
 
 from asl_xdsl.dialects import asl
 
+GLOBALS_KEY = "globals"
 
 @register_impls
 class ASLFunctions(InterpreterFunctions):
@@ -524,6 +525,56 @@ class ASLFunctions(InterpreterFunctions):
     ) -> PythonValues:
         value = op.value
         return (value.data,)
+
+    @impl(asl.GlobalOp)
+    def run_global(
+        self, interpreter: Interpreter, op: asl.GlobalOp, args: PythonValues
+    ) -> PythonValues:
+
+        symbol = op.sym_name
+        init_value = None
+        ref = {'value': init_value} # use a dict so we can mutate it
+
+        globals = interpreter.get_data(ASLFunctions, GLOBALS_KEY, dict)
+        globals[symbol] = ref
+        return ()
+
+    @impl(asl.AddressOfOp)
+    def run_address_of(
+        self, interpreter: Interpreter, op: asl.AddressOfOp, args: PythonValues
+    ) -> PythonValues:
+        symbol = op.symbol
+        globals = interpreter.get_data(ASLFunctions, GLOBALS_KEY, dict)
+        ref = globals[symbol]
+        return (ref,)
+
+    @impl(asl.ArrayRefOp)
+    def run_array_ref(
+        self, interpreter: Interpreter, op: asl.ArrayRefOp, args: tuple[Any, ...]
+    ) -> PythonValues:
+        ref: dict
+        index: int
+        (ref, index) = args
+        element_ref = ref.get(index, { 'value': None })
+        return (element_ref,)
+
+    @impl(asl.LoadOp)
+    def run_load(
+        self, interpreter: Interpreter, op: asl.LoadOp, args: tuple[Any, ...]
+    ) -> PythonValues:
+        ref: dict
+        (ref) = args
+        value = ref.get('value', None) # None => uninitialized
+        return (value,)
+
+    @impl(asl.StoreOp)
+    def run_store(
+        self, interpreter: Interpreter, op: asl.StoreOp, args: tuple[Any, ...]
+    ) -> PythonValues:
+        ref: dict
+        (ref, value) = args
+        ref['value'] = value
+        return ()
 
     @impl(asl.PrintBitsHexOp)
     def asl_print_bits_hex(
