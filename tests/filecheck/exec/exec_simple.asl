@@ -1,4 +1,4 @@
-// RUN: asl-opt --t exec %s | filecheck %s
+// RUN: asl-opt -t exec %s | filecheck %s
 
 func main.0() => integer
 begin
