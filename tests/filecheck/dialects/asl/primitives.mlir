@@ -113,6 +113,6 @@ builtin.module {
     %sint1, %sint2 = "test.op"() : () -> (i8, i8)
     asl.print_sintN_hex %sint1 : i8
     asl.print_sintN_dec %sint1 : i8
-// CHECK:         asl.print_sintN_hex %sint1 : i8 -> ()
-// CHECK-NEXT:    asl.print_sintN_dec %sint1 : i8 -> ()
+// CHECK:         asl.print_sintN_hex %sint1 : i8
+// CHECK-NEXT:    asl.print_sintN_dec %sint1 : i8
 }

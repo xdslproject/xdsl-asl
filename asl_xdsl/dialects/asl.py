@@ -1252,7 +1252,7 @@ class PrintSIntNHexOp(IRDLOperation):
 
     arg = operand_def(builtin.IntegerType)
 
-    assembly_format = "$arg `:` type($arg) `->` `(` `)` attr-dict"
+    assembly_format = "$arg `:` type($arg) attr-dict"
 
     def __init__(
         self,
@@ -1278,7 +1278,7 @@ class PrintSIntNDecOp(IRDLOperation):
 
     arg = operand_def(builtin.IntegerType)
 
-    assembly_format = "$arg `:` type($arg) `->` `(` `)` attr-dict"
+    assembly_format = "$arg `:` type($arg) attr-dict"
 
     def __init__(
         self,
